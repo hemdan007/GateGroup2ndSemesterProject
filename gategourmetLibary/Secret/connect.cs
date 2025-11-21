@@ -8,7 +8,7 @@ namespace gategourmetLibrary.Sercet
 {
     internal class connect
     {
-        public string cstring;
+        public string cstring; 
 
         public connect()
         {
