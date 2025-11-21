@@ -1,4 +1,4 @@
-﻿using simply_database_test.Sercet;
+﻿using simply_database_test.Secret;
 
 namespace simply_database_test
 {

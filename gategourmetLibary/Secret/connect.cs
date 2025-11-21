@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace simply_database_test.Sercet
+namespace gategourmetLibrary.Sercet
 {
     internal class connect
     {
