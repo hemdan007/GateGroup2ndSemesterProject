@@ -1,4 +1,4 @@
-﻿namespace gategourmetLibary
+﻿namespace gategourmetLibrary
 {
     public class Class1
     {
