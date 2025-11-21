@@ -1,4 +1,4 @@
-﻿using simply_database_test.Sercet;
+﻿using simply_database_test.Secret;
 
 namespace simply_database_test
 {
@@ -14,7 +14,7 @@ namespace simply_database_test
 
             foreach (testallergi a in allergiw)
             {
-                Console.WriteLine($" it has an id of {a.ID} and name of {a.Name}");
+                Console.WriteLine($" it has an id of {a.ID} and name  of {a.Name}");
 
             }
         }
