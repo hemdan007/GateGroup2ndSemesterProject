@@ -11,15 +11,15 @@ namespace gategourmetLibrary.Repo
     public interface IOrderRepo
     {
         //returns the list of all orders
-        List<Order> GetAll();
+        List<Order> GetAllOrders();
         //add a new order to repo
-        void Add(Order order);
+        void AddOrder(Order order);
         //delete an order by its ID
-        void Delete(int orderID);
+        void DeleteOrder(int orderID);
         //update an existing order by its ID
-        void Update(int orderID, Order UpdatedOrder);
+        void UpdateOrder(int orderID, Order UpdatedOrder);
         //returns a specific order by its ID
-        Order Get(int orderID);
+        Order GetOrder(int orderID);
         //returns a list of recipe parts for a specific order by orderID
         List<RecipePart> GetRecipeParts(int orderID);
         //filters orders made by a specific employee

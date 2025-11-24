@@ -20,27 +20,27 @@ namespace gategourmetLibrary.Service
         // Method to get all orders
         public List<Order> GetAllOrders()
         {
-            return _orderRepo.GetAll();
+            return _orderRepo.GetAllOrders();
         }
         // Method to add a new order
         public void AddOrder(Order order)
         {
-            _orderRepo.Add(order);
+            _orderRepo.AddOrder(order);
         }
         // Method to delete an order by ID
         public void DeleteOrder(int orderID)
         {
-            _orderRepo.Delete(orderID);
+            _orderRepo.DeleteOrder(orderID);
         }
         // Method to update an existing order
         public void UpdateOrder(int orderID, Order updatedOrder)
         {
-            _orderRepo.Update(orderID, updatedOrder);
+            _orderRepo.UpdateOrder(orderID, updatedOrder);
         }
         // Method to get a specific order by ID
         public Order GetOrder(int orderID)
         {
-            return _orderRepo.Get(orderID);
+            return _orderRepo.GetOrder(orderID);
         }
         //// Method to get recipe parts for a specific order
         public List<RecipePart> GetOrderRecipeParts(int orderID)
