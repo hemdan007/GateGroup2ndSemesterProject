@@ -21,7 +21,7 @@ html {
     --accent-hover: #AD9C6E;
     --text-light: #E8E8E8;
     --text-muted: #B6B6B6;
-    --footer: #1F2F26; /* mere eksklusiv olivengrøn */
+    --footer: #1F2F26; 
 }
 
 body {
@@ -89,7 +89,7 @@ a {
         color: var(--accent);
     }
 
-/* ------------ IMAGE CARDS (general) ------------ */
+/* ------------ img cards (general) ------------ */
 .card-img-top {
     aspect-ratio: 16/8;
     object-fit: cover;
