@@ -3,146 +3,83 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using gategourmetLibrary.Repo;
 using gategourmetLibrary.Models;
-using gategourmetLibrary.Service;
 
-namespace gategourmetLibrary.Repo
+namespace gategourmetLibrary.Service
 {
-    public class DepartmentRepo : IDepartmentRepo
+    public class DepartmentService
     {
-        // returns all departments
+        private readonly IDepartmentRepo _departmentRepo;
+        // Constructor to inject the department repository
+        public DepartmentService(IDepartmentRepo departmentRepo)
+        {
+            _departmentRepo = departmentRepo;
+        }
+        // gets all departments
         public List<Department> GetAllDepartments()
         {
-            return null;
+            return _departmentRepo.GetAllDepartments();
         }
         // adds a new department
         public void AddDepartment(Department newDepartment)
         {
-
+            _departmentRepo.AddDepartment(newDepartment);
         }
         // deletes a department by ID
         public void DeleteDepartment(int departmentId)
         {
-
+            _departmentRepo.DeleteDepartment(departmentId);
         }
         // updates department info by ID
         public void UpdateDepartment(int departmentId, Department updatedDepartment)
         {
-
+            _departmentRepo.UpdateDepartment(departmentId, updatedDepartment);
         }
-        // returns a specific department by ID
+        // gets a specific department by ID
         public Department GetDepartment(int departmentId)
         {
-            return null;
+            return _departmentRepo.GetDepartment(departmentId);
         }
         // assigns a new warehouse to a department
         public void NewWarehouse(Warehouse newWarehouse)
         {
-
+            _departmentRepo.NewWarehouse(newWarehouse);
         }
-        // stocks an ingredient in the department's warehouse
+        // to stock an ingredient in the department's warehouse
         public void StockIngredient(Ingredient stockIngredient)
         {
-
+            _departmentRepo.StockIngredient(stockIngredient);
         }
         // gets the stock of a specific warehouse
         public List<Ingredient> GetWarehouseStock(int warehouseId)
         {
-            return null;
+            return _departmentRepo.GetWarehouseStock(warehouseId);
         }
         // gets the managers of a specific department
         public List<Manager> GetDepartmentManagers(int departmentId)
         {
-            return null;
+            return _departmentRepo.GetDepartmentManagers(departmentId);
         }
         // gets the employees of a specific department
         public List<Employee> GetDepartmentEmployees(int departmentId)
         {
-            return null;
+            return _departmentRepo.GetDepartmentEmployees(departmentId);
         }
         // adds a new manager to a department
         public void AddNewDepartmentManager(int departmentId, Manager newManager)
         {
-
+            _departmentRepo.AddNewDepartmentManager(departmentId, newManager);
         }
         // adds a new employee to a department
         public void AddNewDepartmentEmployee(int departmentId, Employee newEmployee)
         {
-
+            _departmentRepo.AddNewDepartmentEmployee(departmentId, newEmployee);
         }
         // removes stock from a department's warehouse
         public void RemoveStock(Ingredient ingredient, int amount, int departmentID, int warehouseID)
         {
-
+            _departmentRepo.RemoveStock(ingredient, amount, departmentID, warehouseID);
         }
-
-
-
-        //public void Add(int department)
-        //{
-
-        //}
-
-        //public void Delete(int department)
-        //{
-
-        //}
-
-        //public void Update(int DepartmentID, Department UpdateDepartment  )
-        //{
-
-        //}
-
-        //public void GetAll()
-        //{
-
-        //}
-
-        //public void NewWarehouse(WereHouse newWarehouse)
-        //{
-
-        //}
-
-        //public void StokIngredient(Ingredient stockIngredient)
-        //{
-
-        //}
-        //public void GetWarehouseStock(int warehouse)
-        //{
-
-        //}
-
-        //public void GetDepartmentManagers(int department)
-        //{
-
-        //}
-
-        //public void GetDepartmentEmployees(int department)
-        //{
-
-        //}
-
-        //public int Get( int DepartmentID )
-        //{
-        //    int i = 1;
-        //    return i;
-        //}
-
-        //public void AddNewDepartmentManager(int DepartmentID,manager newManager) 
-        //{
-
-        //}
-
-
-        //public void  AddNewDepartmentEmpolyee(int DepartmentID, Employee newEmployee)
-        //{
-
-        //}
-
-        //public void RemoveStock(Ingredient ingredient, int amount, Department departmentID, Warehouse warehouseID)
-        //{
-
-        //}
-
     }
 }

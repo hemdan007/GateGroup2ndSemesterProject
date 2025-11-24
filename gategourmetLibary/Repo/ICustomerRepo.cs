@@ -16,7 +16,7 @@ namespace gategourmetLibrary.Repo
         void AddCustomer(Customer customer);
         //deletes a customer by ID
         void DeleteCustomer(int customerId);
-        //updates customer information by ID
+        //updates customer info by ID
         void UpdateCustomer(int customerId, Customer updatedCustomer);
         //returns a specific customer by ID
         Customer GetCustomer(int customerId);

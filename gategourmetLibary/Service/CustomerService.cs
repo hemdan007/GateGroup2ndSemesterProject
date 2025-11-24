@@ -51,8 +51,5 @@ namespace gategourmetLibrary.Service
         {
             return _customerRepo.FilterCustomersByName(name);
         }
-
-
-
     }
 }
