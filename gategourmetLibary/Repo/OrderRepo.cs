@@ -184,10 +184,7 @@ namespace gategourmetLibrary.Repo
         {
             
         }   
-        public List<RecipePart> GetRecipeParts(int orderID)
-        {
-            return new List<RecipePart>();
-        }
+       
 
         public void filterAfterWhoMade(Employee filterAfterWhoMade)
         {
@@ -198,8 +195,7 @@ namespace gategourmetLibrary.Repo
         {
             
         }
-    public class OrderRepo : IOrderRepo
-    {
+    
         //returns the list of all orders
         public List<Order> GetAllOrders()
         {

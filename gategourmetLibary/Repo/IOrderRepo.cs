@@ -10,7 +10,7 @@ using gategourmetLibrary.Service;
 namespace gategourmetLibrary.Repo
 {
     public interface IOrderRepo
-    interface IOrderRepo 
+
     {
         //returns the list of all orders
         List<Order> GetAllOrders();
