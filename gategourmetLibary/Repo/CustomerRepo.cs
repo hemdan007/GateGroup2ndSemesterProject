@@ -4,40 +4,47 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using gategourmetLibrary.Models;
+using gategourmetLibrary.Service;
 
 namespace gategourmetLibrary.Repo
 {
-    internal class CustomerRepo
+    public class CustomerRepo : ICustomerRepo
     {
-
-
-        public void Add(int customer)
+        //returns all customers
+        public List<Customer> GetAllCustomers()
+        {
+            return null;
+        }
+        //adds a new customer
+        public void AddCustomer(Customer customer)
         {
 
         }
+        //deletes a customer by ID
+        public void DeleteCustomer(int customerId)
+        {
 
-        public int Get()
-        {
-            int i = 1;
-            return i;
         }
+        //updates customer information by ID
+        public void UpdateCustomer(int customerId, Customer updatedCustomer)
+        {
 
-        public void Delete(int customer)
-        {
         }
-        public void GetAll()
+        //returns a specific customer by ID
+        public Customer GetCustomer(int customerId)
         {
+            return null;
         }
-        public void MyOrdwer (int customer)
+        //returns orders for a specific customer by ID
+        public List<Order> GetCustomerOrders(int customerId)
         {
+            return null;
         }
-
-        public void Update(int customer) 
+        //filters customers by name
+        public List<Customer> FilterCustomersByName(string name)
         {
+            return null;
         }
-        public void Filter (string customer)
-        {
-        }
-
     }
 }
