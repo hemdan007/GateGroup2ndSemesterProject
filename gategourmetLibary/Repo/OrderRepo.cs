@@ -11,27 +11,27 @@ namespace gategourmetLibrary.Repo
     public class OrderRepo : IOrderRepo
     {
         //returns the list of all orders
-        public List<Order> GetAll()
+        public List<Order> GetAllOrders()
         {
             return null;
         }
         //add a new order to repo
-        public void Add(Order order)
+        public void AddOrder(Order order)
         {
 
         }
         //delete an order by its ID
-        public void Delete(int orderID)
+        public void DeleteOrder(int orderID)
         {
 
         }
         //update an existing order by its ID
-        public void Update(int orderID, Order UpdatedOrder)
+        public void UpdateOrder(int orderID, Order UpdatedOrder)
         {
 
         }
         //returns a specific order by its ID
-        public Order Get(int orderID)
+        public Order GetOrder(int orderID)
         {
             return null;
         }
