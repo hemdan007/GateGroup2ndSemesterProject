@@ -21,6 +21,9 @@ namespace gategourmetLibrary.Models
         // assebling instruction 
         public string Assemble { get; set; }
 
+        public string partName { get; set; }
+        public int ID { get; set;}
+
         public RecipePart() 
         {
             Ingredients = new List<Ingredient>();

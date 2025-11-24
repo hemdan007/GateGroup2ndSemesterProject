@@ -9,7 +9,7 @@ namespace gategourmetLibrary.Models
     public class Order
     {
         // parts from recipe that forms a complete dish 
-        public List<RecipePart> Recipe {  get; set; }
+        public Dictionary<int,RecipePart> Recipe {  get; set; }
 
         // customer that has ordered this dish/ order
         public Customer CustomerOrder { get; set; }
@@ -23,9 +23,20 @@ namespace gategourmetLibrary.Models
         // when order must be done/finished 
         public DateTime OrderDoneBy { get; set; }
 
-        public Order()
+        public int ID { get; set; }
+        public bool paystatus { get; set; }
+
+        public Order( DateTime made,DateTime ready,Customer customer,int id,bool pstatus)
         {
-            Recipe = new List<RecipePart>();
+            OrderMade = made;
+            OrderDoneBy = ready;
+            CustomerOrder = customer;
+            ID = id;
+            paystatus = pstatus;
+        }
+        public Order(DateTime made, DateTime ready, Customer customer, int id, Dictionary<int, RecipePart> recipe):this(made, ready, customer, id)
+        {
+            Recipe = recipe;
         }
     }
 }

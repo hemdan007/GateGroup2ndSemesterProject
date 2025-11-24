@@ -1,4 +1,5 @@
-﻿using System;
+﻿using gategourmetLibrary.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace gategourmetLibrary.Repo
 {
-    interface IOrderRepo
+    interface IOrderRepo 
     {
-        void Add(int order);
-        int Get();
-        void Delete(int order);
-        void GetAll();
-        void Update(int order);
-        void Filter(string order);
+        void Add(Order order);
+        Order Get(int orderID);
+        void Delete(int orderPrimaryKey);
+        Dictionary<int, Order> GetAll();
+        void Update(int orderID, Order updateOrder);
+
     }
 }

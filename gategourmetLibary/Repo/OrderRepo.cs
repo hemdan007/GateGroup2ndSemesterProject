@@ -1,59 +1,212 @@
 ﻿using gategourmetLibrary.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using gategourmetLibrary.Secret;
+using Microsoft.Data.SqlClient;
 
 namespace gategourmetLibrary.Repo
 {
-    public class OrderRepo
+    public class OrderRepo : IOrderRepo
     {
-        //public void GetAll()
-        //{
-        //    List<Order>
-        //  }
+        string _connectionString;
+        Connect _cstring;
+        public OrderRepo()
+        {
+            _connectionString = _cstring.cstring;
 
-        //public void Add(Order newOrder)
-        //{
-        //}
-        //public void Delete(int orderID)
-        //{
-        //}
-        //public void Get(int orderID)
-        //{
-        //}
+        }
 
-        //public void Update(int orderID, Order updateOrder)
-        //{
-        //}
-        //public void GetRecipeParts(int orderID)
-        //{
-        //    List<RecipePart>
-        //}
+        public Dictionary<int, Order> GetAll()
+        {
 
-        //public void Filter(employee filterAfterWhoMade)
-        //{
-        //    List<order>
-        //}
+            Dictionary<int, Order> ordersFromDatabase = new Dictionary<int, Order>();
 
-        //public void Filter(datetime filterAfterOrderToday)
-        //{
-        //    List<order>
-        //}
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "SELECT O_ID,O_Made,O_ready,O_paystatus,O_status FROM Ordertable",
+                sqlConnection);
+            /*join orderTable on OrderRecipe.O_ID = ordertable.O_ID  join recipePart on OrderRecipe.R_ID = RecipePart.R_ID",*/
+            try
+            {
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
 
-        //public void Filter(customer filterAfterCompany)
-        //{
-        //    List<order>
-        //}
+                while (sqlReader.Read())
+                {
+                    int id = Convert.ToInt32(sqlReader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_paystatus"]);
+                    string status =  sqlReader["O_status"].ToString();
+                    //int rID = Convert.ToInt32(sqlReader["R_ID"]);
+                    //string howToPrep = sqlReader["R_HowToPrep"].ToString();
+                    //string name = sqlReader["R_Name"].ToString();
+                    //string rStatus = sqlReader["R_Status"].ToString();
 
-        //public void Filter (enum filterAfterStatus)
-        //{
-        //    List<order> 
-        //}
 
-        //public void Filter(datetime filterAfterDate)
-        //{ 
-        //}
+                    Order order = new Order(made,ready,new Customer(),id,paystatus);
+
+                    ordersFromDatabase.Add(id, order);
+                }
+
+                sqlReader.Close();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in ResidentRepository.GetAllResidents(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            return ordersFromDatabase;
+        }
+
+        public void Add(Order newOrder)
+        {
+
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "INSERT INTO ordertable (O_ID, O_Made, O_ready, o_paystatus, O_status) " +
+                "VALUES (@O_ID, @O_Made, @O_ready, @O_paystatus, @O_status)",
+                sqlConnection);
+
+            SqlCommand sqlCommandRecipePart = new SqlCommand(
+               "INSERT INTO recipePart (R_ID, R_howToPrep, R_name, R_status) " +
+               "VALUES (@R_ID, @R_howToPrep, @R_name, @R_status)",
+               sqlConnection);
+
+            SqlCommand sqlCommandOrderRecipePart = new SqlCommand(
+              "INSERT INTO recipePart (R_ID, O_ID) " +
+              "VALUES (@R_ID, @O_ID)",
+              sqlConnection);
+            SqlCommand sqlCommandRecipePartIngredient = new SqlCommand(
+             "INSERT INTO recipePart (R_ID, I_ID) " +
+             "VALUES (@R_ID, @I_ID)",
+             sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@O_made", newOrder.OrderMade);
+            sqlCommand.Parameters.AddWithValue("@O_status", newOrder.Status);
+            sqlCommand.Parameters.AddWithValue("@O_ready", newOrder.OrderDoneBy);
+            sqlCommand.Parameters.AddWithValue("@O_ID", newOrder.ID);
+            sqlCommand.Parameters.AddWithValue("@O_paystatus", newOrder.paystatus);
+
+            try
+            {
+                sqlConnection.Open();
+                sqlCommand.ExecuteNonQuery();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Databasefejl i ResidentRepository.AddResident(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            foreach (KeyValuePair<int,RecipePart> part in newOrder.Recipe)
+            {
+                sqlCommandRecipePart.Parameters.AddWithValue("@R_ID", part.Value.ID);
+                sqlCommandRecipePart.Parameters.AddWithValue("@R_howToprep", part.Value.Assemble);
+                sqlCommandRecipePart.Parameters.AddWithValue("@r_name", part.Value.partName);
+                sqlCommandRecipePart.Parameters.AddWithValue("@R_status",part.Value.status);
+                
+
+                try
+                {
+                    sqlConnection.Open();
+                    sqlCommandRecipePart.ExecuteNonQuery();
+                    sqlCommandOrderRecipePart.ExecuteNonQuery();
+                }
+                catch (SqlException sqlError)
+                {
+                    throw new Exception("Databasefejl i ResidentRepository.AddResident(): " + sqlError.Message);
+                }
+                finally
+                {
+                    sqlConnection.Close();
+                }
+                sqlCommandOrderRecipePart.Parameters.AddWithValue("@O_ID", newOrder.ID);
+                sqlCommandOrderRecipePart.Parameters.AddWithValue("@R_ID", part.Value.ID);
+                try
+                {
+                    sqlCommandOrderRecipePart.ExecuteNonQuery();
+                }
+                catch (SqlException sqlError)
+                {
+                    throw new Exception("Databasefejl i ResidentRepository.AddResident(): " + sqlError.Message);
+                }
+                finally
+                {
+                    sqlConnection.Close();
+                }
+            }
+            foreach (KeyValuePair<int, RecipePart> part in newOrder.Recipe)
+            {
+                foreach(Ingredient i in part.Value.Ingredients)
+                {
+                    sqlCommandOrderRecipePart.Parameters.AddWithValue("@I_ID", i.ID);
+                    sqlCommandOrderRecipePart.Parameters.AddWithValue("@R_ID", part.Value.ID);
+                    try
+                    {
+                        sqlConnection.Open();
+                        sqlCommandOrderRecipePart.ExecuteNonQuery();
+                       
+                    }
+                    catch (SqlException sqlError)
+                    {
+                        throw new Exception("Databasefejl i ResidentRepository.AddResident(): " + sqlError.Message);
+                    }
+                    finally
+                    {
+                        sqlConnection.Close();
+                    }
+                }
+            }
+            
+
+        }
+        public void Delete(int orderID)
+        {
+        }
+        public Order Get(int orderID)
+        {
+            return null;
+        }
+
+        public void Update(int orderID, Order updateOrder)
+        {
+            
+        }   
+        public List<RecipePart> GetRecipeParts(int orderID)
+        {
+            return new List<RecipePart>();
+        }
+
+        public void filterAfterWhoMade(Employee filterAfterWhoMade)
+        {
+            
+        }
+
+        public void filterAfterOrderToday(DateTime filterAfterOrderToday)
+        {
+            
+        }
+
+        public void filterAfterCompany(Customer filterAfterCompany)
+        {
+           
+        }
+
+        public void filterAfterStatus(Enum filterAfterStatus)
+        {
+           
+        }
+
+        public void filterAfterDate(DateTime filterAfterDate)
+        {
+
+        }
+       
     }
 }
