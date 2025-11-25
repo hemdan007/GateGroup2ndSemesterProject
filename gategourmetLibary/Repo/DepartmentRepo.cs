@@ -98,12 +98,12 @@ namespace gategourmetLibrary.Repo
 
             command.Parameters.AddWithValue("@name", updatedDepartment.DepartmentName);
             command.Parameters.AddWithValue("@location", updatedDepartment.DepartmentLocation);
-            command.Parameters.AddWithValue("@mail",updatedDepartment.DepartmentEmail);
+            command.Parameters.AddWithValue("@mail", updatedDepartment.DepartmentEmail);
             command.Parameters.AddWithValue("@id", updatedDepartment.DepartmentId);
 
-            connection.Open ();
+            connection.Open();
             command.ExecuteNonQuery();
-            connection.Close ();
+            connection.Close();
         }
 
         // returns a specific department by ID
@@ -114,7 +114,7 @@ namespace gategourmetLibrary.Repo
                 "SELECT D_ID, D_Name, D_Location, D_Email FROM Department WHERE D_ID =@id",
                 connection);
 
-            command.Parameters.AddWithValue("@id",departmentId);
+            command.Parameters.AddWithValue("@id", departmentId);
 
             connection.Open();
 
@@ -136,17 +136,17 @@ namespace gategourmetLibrary.Repo
             connection.Close();
             return null;
         }
-         
+
 
         // assigns a new warehouse to a department
         public void NewWarehouse(Warehouse newWarehouse)
         {
-            SqlConnection connection = new SqlConnection (_connectionString);
+            SqlConnection connection = new SqlConnection(_connectionString);
 
-            connection.Open ();
+            connection.Open();
 
             // indsætter warehouse og retunerer generet W_id
-            SqlCommand insertWarehouse = new SqlCommand (
+            SqlCommand insertWarehouse = new SqlCommand(
                 "INSERT INTO Warehouse (W_Name, W_Type, W_Location)" +
                 "VALUES (@name, @type,@location); SELECT SCOPE_IDENTITY();",
                 connection);
@@ -159,27 +159,91 @@ namespace gategourmetLibrary.Repo
             int warehouseId = Convert.ToInt32(result);
 
             // linker warehouse til department 
-            SqlCommand link = new SqlCommand (
+            SqlCommand link = new SqlCommand(
                 "INSERT INTO werehouseDepartment (D_ID, W_ID) VALUES (@d, @w)",
                 connection);
 
             link.Parameters.AddWithValue("@d", newWarehouse.DepartmentId);
             link.Parameters.AddWithValue("@w", warehouseId);
-            link.ExecuteNonQuery ();
+            link.ExecuteNonQuery();
 
-            connection.Close ();
+            connection.Close();
 
         }
         // stocks an ingredient in the department's warehouse
         public void StockIngredient(Ingredient stockIngredient)
         {
             SqlConnection connection = new SqlConnection(_connectionString);
+            connection.Open();
 
+            // opdater antal af ingredienser 
+            SqlCommand updateQuantity = new SqlCommand(
+                "UPDATE Ingredient SET I_quntity = I_quntity + @amount WHERE I_ID =@id",
+                connection);
+
+            updateQuantity.Parameters.AddWithValue("@amount", stockIngredient.Quantity);
+            updateQuantity.Parameters.AddWithValue("@id", stockIngredient.ID);
+            updateQuantity.ExecuteNonQuery();
+
+            SqlCommand linkCheck = new SqlCommand(
+                "SELECT COUNT (*) FROM werehouseIngredient WHERE W_ID = @w AND I_ID = @i", connection);
+
+            linkCheck.Parameters.AddWithValue("@w", stockIngredient.WarehouseId);
+            linkCheck.Parameters.AddWithValue("@i", stockIngredient.ID);
+
+            int exists = Convert.ToInt32(linkCheck.ExecuteScalar());
+
+            if (exists == 0)
+            {
+                SqlCommand createLink = new SqlCommand(
+                    "INSERT INTO werehouseIngredient (W_ID, I_ID) VALUES (@w,@i)",
+                    connection);
+
+                createLink.Parameters.AddWithValue("@w", stockIngredient.WarehouseId);
+                createLink.Parameters.AddWithValue("@i", stockIngredient.ID);
+                createLink.ExecuteNonQuery();
+
+            }
+            connection.Close();
         }
         // gets the stock of a specific warehouse
         public List<Ingredient> GetWarehouseStock(int warehouseId)
         {
-            return null;
+            // liste der indeholder alle ingredienser i warehouse 
+            List<Ingredient> ingredients = new List<Ingredient>();
+
+            SqlConnection connection = new SqlConnection(_connectionString);
+
+            // sql mellem ingredient og werehouseingredient 
+            SqlCommand command = new SqlCommand(
+                "SELECT i.ID, i.I_Name,I.I_expireDate, i.I_quntity" +
+                "FROM werehouseIngredient wi" +
+                "JOIN Ingredient i ON wi.I_ID = i.I_ID" +
+                "WHERE wi.W_ID = @id",
+                connection);
+
+            command.Parameters.AddWithValue("@id", warehouseId);
+
+            connection.Open();
+
+            SqlDataReader reader = command.ExecuteReader();
+
+            // læser alle ingredienser for warehouse 
+            while (reader.Read())
+            {
+                Ingredient ingredient = new Ingredient();
+                ingredient.ID = (int)reader["I_ID"];
+                ingredient.Name = reader["I_Name"].ToString();
+                ingredient.ExpireDate = (DateTime)reader["I_expireDate"];
+                ingredient.Quantity = (int)reader["I_quintity"];
+                ingredient.WarehouseId = warehouseId;
+
+                ingredients.Add(ingredient);
+            }
+            reader.Close();
+            connection.Close();
+
+            return ingredients;
         }
         // gets the managers of a specific department
         public List<Manager> GetDepartmentManagers(int departmentId)
@@ -189,91 +253,106 @@ namespace gategourmetLibrary.Repo
         // gets the employees of a specific department
         public List<Employee> GetDepartmentEmployees(int departmentId)
         {
-            return null;
+            List<Employee> employees = new List<Employee>();
+
+            SqlConnection connection = new SqlConnection(_connectionString);
+
+
+            SqlCommand command = new SqlCommand(
+                "SELECT e.Employee_ID, e.E_Name, e.E_Email, e.E_PhoneNumber" +
+                "FROM EmployeeDepartment ed" +
+                "JOIN Employee e ON ed.E_ID = e.Employee_ID" +
+                "WHERE ed.D_ID = @id",
+                connection);
+            command.Parameters.AddWithValue("@id", departmentId);
+
+            connection.Open();
+
+            SqlDataReader reader = command.ExecuteReader();
+
+            // læser alle medarbejder i denne afdeling 
+            while (reader.Read())
+            {
+                Employee employee = new Employee();
+                employee.Id = (int)reader["Employee_ID"];
+                employee.Name = reader["E_Name"].ToString();
+                employee.Email = reader["E_Email"].ToString();
+                employee.PhoneNumber = reader["E_PhoneNumber"].ToString();
+
+                employees.Add(employee);
+            }
+            reader.Close();
+            connection.Close();
+
+            return employees;
         }
         // adds a new manager to a department
         public void AddNewDepartmentManager(int departmentId, Manager newManager)
         {
+            // vi har ikke manager i databasen 
 
         }
         // adds a new employee to a department
         public void AddNewDepartmentEmployee(int departmentId, Employee newEmployee)
         {
+            SqlConnection connection = new SqlConnection(_connectionString);
 
+            SqlCommand command = new SqlCommand(
+                "INSERT INTP EmployeeDepartment (E_ID, D_ID) VALUES (@e,@d)",
+                 connection);
+
+            command.Parameters.AddWithValue("@e", newEmployee.Id);
+            command.Parameters.AddWithValue("@d", departmentId);
+            connection.Open();
+            command.ExecuteNonQuery();
+            connection.Close();
         }
         // removes stock from a department's warehouse
         public void RemoveStock(Ingredient ingredient, int amount, int departmentID, int warehouseID)
         {
+            SqlConnection connection = new SqlConnection(_connectionString);
+
+            connection.Open();
+
+            SqlCommand update = new SqlCommand(
+                "UPDATE Ingredient SET I_quntity = I_quntity - @amount WHERE I_ID = @id",
+                connection);
+
+            update.Parameters.AddWithValue("@amount", amount);
+            update.Parameters.AddWithValue("@id", ingredient.ID);
+            update.ExecuteNonQuery();
+
+            SqlCommand getQuantity = new SqlCommand(
+                "SELECT I_quntity FROM Ingredient WHERE I_ID = @id",
+                connection);
+
+            getQuantity.Parameters.AddWithValue("@id", ingredient.ID);
+
+            object quantityObj = getQuantity.ExecuteScalar();
+
+            if (quantityObj == null || quantityObj == DBNull.Value)
+            {
+                connection.Close();
+                return;
+            }
+
+            // convert database value to int
+            int quantity = Convert.ToInt32(quantityObj);
+
+            if (quantity <= 0)
+            {
+                SqlCommand removeLink = new SqlCommand(
+                    "DELETE FROM werehouseIngredient WHERE W_ID = @w AND I_ID = @i",
+                    connection);
+
+                removeLink.Parameters.AddWithValue("@w", warehouseID);
+                removeLink.Parameters.AddWithValue("@i", ingredient.ID);
+                removeLink.ExecuteNonQuery();
+            }
+
+            connection.Close();
+
 
         }
-
-
-
-        //public void Add(int department)
-        //{
-
-        //}
-
-        //public void Delete(int department)
-        //{
-
-        //}
-
-        //public void Update(int DepartmentID, Department UpdateDepartment  )
-        //{
-
-        //}
-
-        //public void GetAll()
-        //{
-
-        //}
-
-        //public void NewWarehouse(WereHouse newWarehouse)
-        //{
-
-        //}
-
-        //public void StokIngredient(Ingredient stockIngredient)
-        //{
-
-        //}
-        //public void GetWarehouseStock(int warehouse)
-        //{
-
-        //}
-
-        //public void GetDepartmentManagers(int department)
-        //{
-
-        //}
-
-        //public void GetDepartmentEmployees(int department)
-        //{
-
-        //}
-
-        //public int Get( int DepartmentID )
-        //{
-        //    int i = 1;
-        //    return i;
-        //}
-
-        //public void AddNewDepartmentManager(int DepartmentID,manager newManager) 
-        //{
-
-        //}
-
-
-        //public void  AddNewDepartmentEmpolyee(int DepartmentID, Employee newEmployee)
-        //{
-
-        //}
-
-        //public void RemoveStock(Ingredient ingredient, int amount, Department departmentID, Warehouse warehouseID)
-        //{
-
-        //}
-
     }
 }
