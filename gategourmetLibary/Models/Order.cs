@@ -36,7 +36,14 @@ namespace gategourmetLibrary.Models
         }
         public Order(DateTime made, DateTime ready, Customer customer, int id, Dictionary<int, RecipePart> recipe):this(made, ready, customer, id)
         {
+            OrderMade = made;
+            OrderDoneBy = ready;
+            CustomerOrder = customer;
+            ID = id;
             Recipe = recipe;
+        }
+        public Order()
+        {
         }
     }
 }
