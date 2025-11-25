@@ -1,3 +1,8 @@
+
+
+using gategourmetLibrary.Repo;
+using gategourmetLibrary.Service;
+
 namespace GateGroupWebpages
 {
     public class Program
@@ -8,8 +13,8 @@ namespace GateGroupWebpages
 
             // Add services to the container.
             builder.Services.AddRazorPages();
-
-            var app = builder.Build();
+            builder.Services.AddSingleton<IOrderRepo, OrderRepo>();
+            builder.Services.AddSingleton<OrderService>(); var app = builder.Build();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

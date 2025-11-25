@@ -6,4 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="gategourmetLibrary">
+      <HintPath>..\gategourmetLibary\obj\Debug\net8.0\ref\gategourmetLibrary.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
