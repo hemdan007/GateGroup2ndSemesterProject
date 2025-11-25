@@ -40,7 +40,7 @@ namespace gategourmetLibrary.Service
         // gets a specific order by ID
         public Order GetOrder(int orderID)
         {
-            return _orderRepo.GetOrder(orderID);
+            return _orderRepo.Get(orderID);
         }
         // gets recipe parts for a specific order
         public List<RecipePart> GetOrderRecipeParts(int orderID)

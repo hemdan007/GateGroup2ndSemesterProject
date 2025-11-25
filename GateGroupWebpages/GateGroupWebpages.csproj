@@ -7,9 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="gategourmetLibrary">
-      <HintPath>..\gategourmetLibary\obj\Debug\net8.0\ref\gategourmetLibrary.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\gategourmetLibary\gategourmetLibrary.csproj" />
   </ItemGroup>
+
 
 </Project>

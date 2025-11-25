@@ -18,10 +18,9 @@ namespace gategourmetLibrary.Repo
         void AddOrder(Order order);
         //delete an order by its ID
         void DeleteOrder(int orderID);
+        Order Get(int orderID);
         //update an existing order by its ID
         void UpdateOrder(int orderID, Order UpdatedOrder);
-        //returns a specific order by its ID
-        Order GetOrder(int orderID);
         //returns a list of recipe parts for a specific order by orderID
         List<RecipePart> GetRecipeParts(int orderID);
         //filters orders made by a specific employee

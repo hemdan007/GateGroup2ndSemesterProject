@@ -234,10 +234,49 @@ namespace gategourmetLibrary.Repo
         public void Delete(int orderID)
         {
         }
+
+        //returns a specific order by its ID
         public Order Get(int orderID)
         {
-            return null;
-        }
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            Order order = new Order();
+            SqlCommand sqlCommand = new SqlCommand(
+                "SELECT O_ID,O_Made,O_ready,O_paystatus,O_status FROM Ordertable where O_ID = @O_ID ",
+                sqlConnection);
+            sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
+
+            try
+            {
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+
+                while (sqlReader.Read())
+                {
+                    int id = Convert.ToInt32(sqlReader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_paystatus"]);
+                    string status = sqlReader["O_status"].ToString();
+
+
+
+                    order = new Order(made, ready, id, paystatus);
+
+                }
+
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in OrderRepository.AddOrder(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            return order;
+            }
+        
 
         public void Update(int orderID, Order updateOrder)
         {
@@ -245,14 +284,16 @@ namespace gategourmetLibrary.Repo
         }   
        
 
-        public void filterAfterWhoMade(Employee filterAfterWhoMade)
+        public Order filterAfterWhoMade(Employee filterAfterWhoMade)
         {
-            
+            return
+                 null;
         }
 
-        public void filterAfterOrderToday(DateTime filterAfterOrderToday)
+        public Order filterAfterOrderToday(DateTime filterAfterOrderToday)
         {
-            
+            return
+                 null;
         }
     
         //returns the list of all orders
@@ -271,11 +312,7 @@ namespace gategourmetLibrary.Repo
         {
 
         }
-        //returns a specific order by its ID
-        public Order GetOrder(int orderID)
-        {
-            return null;
-        }
+       
         //returns a list of recipe parts for a specific order by orderID
         public List<RecipePart> GetRecipeParts(int orderID)
         {
@@ -306,33 +343,7 @@ namespace gategourmetLibrary.Repo
             return null;
         }
 
-        //public void GetAll()
-        //{
-        //    List<Order>
-        //  }
-
-        //public void Add(Order newOrder)
-        //{
-
-        //}
-        //public void Delete(int orderID)
-        //{
-
-        //}
-        //public void Update(int orderID, Order updateOrder)
-        //{
-
-        //}
-
-        //public void Get(int orderID)
-        //{
-
-        //}
-
-        //public void GetRecipeParts(int orderID)
-        //{
-        //    List<RecipePart>
-        //}
+        
         public void filterAfterCompany(Customer filterAfterCompany)
         {
            
@@ -345,16 +356,6 @@ namespace gategourmetLibrary.Repo
 
         public void filterAfterDate(DateTime filterAfterDate)
         {
-
-        //public void Filter (enum filterAfterStatus)
-        //{
-        //    List<order> 
-        //}
-
-        //public void Filter(datetime filterAfterDate)
-        //{ 
-
-        //}
         }
        
     }
