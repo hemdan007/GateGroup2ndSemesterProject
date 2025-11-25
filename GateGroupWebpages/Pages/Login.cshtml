@@ -3,5 +3,108 @@
 @{
 	ViewData["Title"] = "Log in";
 }
+<div class="login-container">
+    <div class="login-card">
+        <h2 class="text-center">Password</h2>
+      
 
+        <form method="post" class="login-form">
+            <div class="form-group">
+                <label for="password" class="form-label">Adgangskode</label>
+                <input type="password" id="password" name="Password" class="form-control"
+                       placeholder="Indtast din adgangskode" required />
+            </div>
 
+            <button type="submit" class="btn btn-primary w-100">Log ind</button>
+        </form>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger mt-3">
+                @Model.ErrorMessage
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: Black;
+    }
+
+    .login-card {
+        background: Black;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-form {
+        margin-top: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    .btn {
+        padding: 0.75rem;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: black;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .alert {
+        padding: 0.75rem;
+        border-radius: 5px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+
+    .mt-3 {
+        margin-top: 1rem;
+    }
+
+</style>

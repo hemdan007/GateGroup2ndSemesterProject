@@ -11,11 +11,18 @@ namespace GateGroupWebpages
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            
+            
+
             // Add services to the container.
             builder.Services.AddRazorPages();
+            //til den gemme når man er logget ind 
+            builder.Services.AddSession();
             builder.Services.AddSingleton<IOrderRepo, OrderRepo>();
-            builder.Services.AddSingleton<OrderService>(); var app = builder.Build();
-
+            builder.Services.AddSingleton<OrderService>(); 
+            
+            var app = builder.Build();
+            
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -30,6 +37,9 @@ namespace GateGroupWebpages
             app.UseRouting();
 
             app.UseAuthorization();
+
+            //til logud knappen 
+            app.UseSession();
 
             app.MapRazorPages();
 
