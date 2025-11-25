@@ -48,7 +48,7 @@ namespace gategourmetLibrary.Repo
                     //string rStatus = sqlReader["R_Status"].ToString();
 
 
-                    Order order = new Order(made,ready,new Customer(),id,paystatus);
+                    Order order = new Order(made,ready,id,paystatus);
 
                     ordersFromDatabase.Add(id, order);
                 }

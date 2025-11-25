@@ -26,16 +26,16 @@ namespace gategourmetLibrary.Models
         public int ID { get; set; }
         public bool paystatus { get; set; }
 
-        public Order( DateTime made,DateTime ready,Customer customer,int id,bool pstatus)
+        public Order( DateTime made,DateTime ready,int id,bool pstatus)
         {
             OrderMade = made;
             OrderDoneBy = ready;
-            CustomerOrder = customer;
             ID = id;
             paystatus = pstatus;
         }
-        public Order(DateTime made, DateTime ready, Customer customer, int id, bool pstatus, Dictionary<int, RecipePart> recipe):this(made, ready, customer, id, pstatus)
+        public Order(DateTime made, DateTime ready, Customer customer, int id, bool pstatus, Dictionary<int, RecipePart> recipe):this(made, ready, id, pstatus)
         {
+            CustomerOrder = customer;
             Recipe = recipe;
         }
     }

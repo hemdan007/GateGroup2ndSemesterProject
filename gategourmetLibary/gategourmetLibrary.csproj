@@ -10,9 +10,6 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\GateGroupWebpages\GateGroupWebpages.csproj" />
-    <ProjectReference Include="..\simply database test\simply database test.csproj" />
-  </ItemGroup>
+ 
 
 </Project>
