@@ -1,4 +1,4 @@
-
+﻿
 
 using gategourmetLibrary.Models;
 using gategourmetLibrary.Repo;
@@ -43,6 +43,8 @@ namespace GateGroupWebpages
 
             builder.Services.AddSingleton<CustomerService>();
 
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession();
 
 
 
