@@ -1,6 +1,4 @@
-﻿
-
-using gategourmetLibrary.Models;
+﻿using gategourmetLibrary.Models;
 using gategourmetLibrary.Repo;
 using gategourmetLibrary.Secret;
 using gategourmetLibrary.Service;
