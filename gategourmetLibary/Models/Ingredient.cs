@@ -25,8 +25,16 @@ namespace gategourmetLibrary.Models
 
         public Ingredient() 
         {
+           
             Allergies = new List<string>();
         }
+        public Ingredient(int id, string name):this()
+        {
+            ID = id;
+            Name = name;
+           
+        }
+
 
     }
 }
