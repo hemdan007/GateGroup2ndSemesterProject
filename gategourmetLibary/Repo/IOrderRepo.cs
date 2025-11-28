@@ -33,6 +33,7 @@ namespace gategourmetLibrary.Repo
         List<Order> FilterByStatus(OrderStatus status);
         //filters orders by a specific date
         List<Order> FilterByDate(DateTime date);
+        List<Ingredient> GetAllIngredients();
         //void Add(Order order);
         //Order Get(int orderID);
         //void Delete(int orderPrimaryKey);

@@ -13,10 +13,11 @@ namespace gategourmetLibrary.Repo
     public class OrderRepo : IOrderRepo
 
     {
+        Connect c = new Connect();
         private readonly string _connectionString;
-        public OrderRepo( string connectionString)
+        public OrderRepo( )
         {
-            _connectionString = connectionString;
+            _connectionString = c.cstring;
         }
         public Dictionary<int, Order> GetAll()
         {
@@ -299,7 +300,34 @@ namespace gategourmetLibrary.Repo
         {
             return null;
         }
-       
+        public List<Ingredient> GetAllIngredients()
+        {
+            //temporary list to hold Ingredients
+            List<Ingredient> Ingredients = new List<Ingredient>();
+            //using (using) to ensure the connection is closed after use
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                //sql command to select all Ingredients
+                SqlCommand command = new SqlCommand("SELECT * FROM ingredient", connection);
+                //open database connection
+                connection.Open();
+                //execute command and read data
+                SqlDataReader reader = command.ExecuteReader();
+                //loop through each returned row
+                while (reader.Read())
+                {
+                    Ingredients.Add(new Ingredient
+                    {
+                        ID = (int)reader["I_ID"],
+                        Name = reader["I_Name"].ToString(),
+
+                    });
+                }
+            }
+            //return the list of Ingredients
+            return Ingredients;
+        }
+        
         //delete an order by its ID
         public void DeleteOrder(int orderID)
         {

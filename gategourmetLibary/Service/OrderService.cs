@@ -72,5 +72,10 @@ namespace gategourmetLibrary.Service
         {
             return _orderRepo.FilterByDate(date);
         }
+
+        public List<Ingredient> GetAllIngredients()
+        {
+            return _orderRepo.GetAllIngredients();
+        }
     }
 }

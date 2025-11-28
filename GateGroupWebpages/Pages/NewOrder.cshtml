@@ -4,10 +4,55 @@
 }
 <h2>Bestil Ret (test side) </h2>
 
-<form method="post">
+@* <form method="post">
     <input type="text" name="OrderText" placeholder="Skriv din ordre her..." />
     <button type="submit">Send Ordre</button>
-</form>
+</form> *@
 
+    <container-sm>
+        <div class="text-center">
+            <h1>Book lokale</h1>
+        </div>
 
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <form method="post">
+                    <div class="form-group container-fluid">
+                        <label for="inputDateTime">ready by: </label>
+                        <input type="datetime-local" asp-for="newOrder.OrderMade" id="StartDateTime" aria-describedby="dateTimeHelp" placeholder="Enter Date/Time" step="3600">
+                        
+                    </div>
+                <div class="form-group container-fluid">
+
+                <label for="inputDateTime">has it been payed for?: </label>
+                <input type="checkbox" asp-for="newOrder.paystatus">
+                </div>
+
+                   
+                <div class="form-group container-fluid">
+                <label for="inputComment">recipart: </label>
+                    <input type="text" asp-for="RecipePar.partName" id="inputForm" aria-describedby="textHelp" placeholder="enter the name of the part">
+                    <input type="text" asp-for="RecipePar.Assemble" id="inputForm" aria-describedby="textHelp" placeholder="enter how to make it">
+                    <div class="mt-2">
+                        <label for="">ingredients add to the part: </label>
+                        <div class="form-group mt-2 d-inline">
+                            <select asp-for="RecipePar.Ingredients">
+                                <option value="0">Select an ingredient </option>
+                                @foreach (var i in Model.Ingredients)
+                                {
+                                    <option value="@i.ID">@i.Name</option>
+                                }
+
+                            </select>
+                        </div>
+                    </div>
+
+                </div>
+
+                  
+                    <button type="submit" class="btn btn-primary mt-5">Submit</button>
+                </form>
+                </<div>
+                </div>
+    </container-sm>
 
