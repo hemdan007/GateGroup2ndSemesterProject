@@ -25,7 +25,7 @@ namespace gategourmetLibrary.Repo
 
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID,O_Made,O_ready,O_paystatus,O_status FROM Ordertable",
+                "SELECT O_ID,O_Made,O_Ready,O_PaySatus FROM OrderTable",
                 sqlConnection);
             /*join orderTable on OrderRecipe.O_ID = ordertable.O_ID  join recipePart on OrderRecipe.R_ID = RecipePart.R_ID",*/
             try
@@ -37,9 +37,9 @@ namespace gategourmetLibrary.Repo
                 {
                     int id = Convert.ToInt32(sqlReader["O_ID"]);
                     DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(sqlReader["O_ready"]);
-                    bool paystatus = Convert.ToBoolean(sqlReader["O_paystatus"]);
-                    string status =  sqlReader["O_status"].ToString();
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
+                    //string status =  sqlReader["O_status"].ToString();
                     //int rID = Convert.ToInt32(sqlReader["R_ID"]);
                     //string howToPrep = sqlReader["R_HowToPrep"].ToString();
                     //string name = sqlReader["R_Name"].ToString();
@@ -47,6 +47,8 @@ namespace gategourmetLibrary.Repo
 
 
                     Order order = new Order(made,ready,id,paystatus);
+                    //get it manually because we dont have it in our DB
+                    order.Status = OrderStatus.Created;
 
                     ordersFromDatabase.Add(id, order);
                 }
@@ -71,8 +73,8 @@ namespace gategourmetLibrary.Repo
 
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                "INSERT INTO ordertable (O_ID, O_Made, O_ready, o_paystatus, O_status) " +
-                "VALUES (@O_ID, @O_Made, @O_ready, @O_paystatus, @O_status)",
+                "INSERT INTO ordertable (O_ID, O_Made, O_Ready, o_PaySatus) " +
+                "VALUES (@O_ID, @O_Made, @O_Ready, @O_PaySatus)",
                 sqlConnection);
 
            
@@ -80,10 +82,10 @@ namespace gategourmetLibrary.Repo
             AddOrderTableCustomert(newOrder.ID, newOrder.CustomerOrder.ID);
 
             sqlCommand.Parameters.AddWithValue("@O_made", newOrder.OrderMade);
-            sqlCommand.Parameters.AddWithValue("@O_status", newOrder.Status);
-            sqlCommand.Parameters.AddWithValue("@O_ready", newOrder.OrderDoneBy);
+            //sqlCommand.Parameters.AddWithValue("@O_status", newOrder.Status);
+            sqlCommand.Parameters.AddWithValue("@O_Ready", newOrder.OrderDoneBy);
             sqlCommand.Parameters.AddWithValue("@O_ID", newOrder.ID);
-            sqlCommand.Parameters.AddWithValue("@O_paystatus", newOrder.paystatus);
+            sqlCommand.Parameters.AddWithValue("@O_PaySatus", newOrder.paystatus);
 
             try
             {
@@ -239,7 +241,7 @@ namespace gategourmetLibrary.Repo
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             Order order = new Order();
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID,O_Made,O_ready,O_paystatus,O_status FROM Ordertable where O_ID = @O_ID ",
+                "SELECT O_ID,O_Made,O_Ready,O_PaySatus FROM Ordertable where O_ID = @O_ID ",
                 sqlConnection);
             sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
 
@@ -252,15 +254,18 @@ namespace gategourmetLibrary.Repo
                 {
                     int id = Convert.ToInt32(sqlReader["O_ID"]);
                     DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(sqlReader["O_ready"]);
-                    bool paystatus = Convert.ToBoolean(sqlReader["O_paystatus"]);
-                    string status = sqlReader["O_status"].ToString();
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
+                    //string status = sqlReader["O_status"].ToString();
 
 
 
                     order = new Order(made, ready, id, paystatus);
+                    //get it manually because we dont have it in our DB
+                    order.Status = OrderStatus.Created;
 
                 }
+                
 
             }
             catch (SqlException sqlError)
