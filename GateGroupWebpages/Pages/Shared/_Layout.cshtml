@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="~/GateGroupWebpages.styles.css" asp-append-version="true" />
 </head>
 <body>
+
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3">
             <div class="container">
@@ -65,13 +66,22 @@
                         <li class="nav-item">
 							<a class="nav-link" href="/Contact">Contact</a>
                         </li>
-
-                        <li class="nav-item">
-                            @if (Context.Session.GetString("IsLoggedIn") != "true")
-						{
-                            <a class="nav-link" href="/Login">Login</a>
+                        @if (Context.Session.GetString("IsLoggedIn") == "true")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Logout">Log ud</a>
+                            </li>
+                            <li class="nav-item">
+                                <pan class="nav-link text-muted">Hej, @Context.Session.GetString("username") </pan>
+                            </li>
                         }
-                        </li>
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Login">Log ind</a>
+                            </li>
+                        }
+                        
                         <li class="nav-item">
                             @if (Context.Session.GetString("IsLoggedIn") == "true")
                             {

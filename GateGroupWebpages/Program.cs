@@ -27,17 +27,17 @@ namespace GateGroupWebpages
             builder.Services.AddSingleton<OrderService>(); 
 
             builder.Services.AddSingleton<IEmpolyeeRepo>
-                (sp => new EmployeeRepo(builder.Configuration.GetConnectionString(connection)));
+                (sp => new EmployeeRepo(connection));
 
             builder.Services.AddSingleton<EmployeeService>();
 
             builder.Services.AddSingleton<IDepartmentRepo>
-                (sp => new DepartmentRepo(builder.Configuration.GetConnectionString(connection)));
+                (sp => new DepartmentRepo(connection));
 
             builder.Services.AddSingleton<DepartmentService>();
 
             builder.Services.AddSingleton<ICustomerRepo>
-                (sp => new CustomerRepo(builder.Configuration.GetConnectionString(connection)));
+                (sp => new CustomerRepo(connection));
 
             builder.Services.AddSingleton<CustomerService>();
 
