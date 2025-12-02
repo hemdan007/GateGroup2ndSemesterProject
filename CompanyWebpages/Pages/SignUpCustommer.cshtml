@@ -1,0 +1,35 @@
+﻿@page
+@model SignUpCustommerModel
+@{
+}
+<h2>Opret adgangskode for kunde</h2>
+
+<form method="post">
+    <div>
+        <label>Kunde ID:</label>
+        <input type="number" name="customerId" value="@Model.CustomerID" required />
+    </div>
+
+    <div>
+        <label>Adgangskode:</label>
+        <input type="password" name="password" required />
+    </div>
+
+    <div>
+        <label>Gentag adgangskode:</label>
+        <input type="password" name="confirmPassword" required />
+    </div>
+
+    <button type="submit">Gem adgangskode</button>
+</form>
+
+@if (Model.ErrorMessage != null)
+{
+    <p style="color:red;">@Model.ErrorMessage</p>
+}
+
+@if (Model.SuccessMessage != null)
+{
+    <p style="color:green;">@Model.SuccessMessage</p>
+}
+
