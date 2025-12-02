@@ -54,6 +54,38 @@ namespace GateGroupWebpages.Pages
             }
 
         }
+
+        //delete handler/method
+        public IActionResult OnPostDelete(int ID)
+        {
+            // get constring from connect class
+            string connectionString = new Connect().cstring;
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                // open connection
+                conn.Open();
+                string sql2 = @" DELETE FROM orderTableRecipePart WHERE O_ID =@id";
+                using (SqlCommand command = new SqlCommand(sql2, conn))
+                {
+                    command.Parameters.AddWithValue("@id", ID);
+                    command.ExecuteNonQuery();
+                }
+
+                string sql = @" DELETE FROM OrderTable WHERE O_ID =@id";
+
+                //execute command
+                using (SqlCommand command = new SqlCommand(sql, conn))
+                {
+                    command.Parameters.AddWithValue("@id", ID);
+                    command.ExecuteNonQuery();
+                }
+            }
+            return RedirectToPage();
+
+        }
+
+
+
         //logic to get order status
         private OrderStatus GetStatus (Order order)
         {

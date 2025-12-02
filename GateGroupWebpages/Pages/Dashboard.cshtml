@@ -20,7 +20,8 @@
                 <th>Status</th>
                 <th>Date</th>
                 <th>Time</th>
-            </tr>
+@*             <th>Actions</th>
+ *@           </tr>
         </thead>
         <tbody>
 
@@ -53,6 +54,17 @@
 
                     <td>@Order.OrderMade.ToShortDateString()</td>
                     <td>@Order.OrderMade.ToShortTimeString()</td>
+
+
+                        <td class="text-end">
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@Order.ID"
+                                  onsubmit="return confirm('Are you sure you want to delete this order?')">
+                                <button class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+
+
+
                 </tr>
             }
         }
