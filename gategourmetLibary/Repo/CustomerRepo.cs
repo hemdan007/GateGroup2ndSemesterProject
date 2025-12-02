@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -51,40 +52,26 @@ namespace gategourmetLibrary.Repo
         //adds a new customer
         public void AddCustomer(Customer customer)
         {
+            Debug.WriteLine(customer.Email);
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                SqlCommand command = new SqlCommand(@"
-            INSERT INTO Customer (C_Name, C_Password, C_Email, C_CompanyName, C_CVR)
-            VALUES (@Name, @Password, @Email, @CompanyName, @CVR)", connection);
-
+                SqlCommand command = new SqlCommand(
+               "INSERT INTO Customer (C_ID,C_Name, C_Password) " +
+               "VALUES (@id,@Name, @Password)", connection);
+                command.Parameters.AddWithValue("@id", 56);
                 command.Parameters.AddWithValue("@Name", customer.Name);
                 command.Parameters.AddWithValue("@Password", customer.Password);
-                command.Parameters.AddWithValue("@Email", customer.Email);
-                command.Parameters.AddWithValue("@CompanyName", customer.CompanyName);
-                command.Parameters.AddWithValue("@CVR", customer.CVR);
+                //command.Parameters.AddWithValue("@Email", customer.Email);
+                //command.Parameters.AddWithValue("@CompanyName", customer.CompanyName);
+                //command.Parameters.AddWithValue("@CVR", customer.CVR);
 
                 connection.Open();
                 command.ExecuteNonQuery();
+
             }
         }
 
-        //public void AddCustomer(Customer customer)
-        //{
-        //    //using (using) to ensure the connection is closed after use
-        //    using (SqlConnection connection = new SqlConnection(_connectionString))
-        //    {
-        //        //sql command to insert a new customer
-        //        SqlCommand command = new SqlCommand("INSERT INTO Customer (C_Name, C_Password) VALUES (@Name, @Password)", connection);
-        //        //add parameters to prevent SQL injection
-        //        command.Parameters.AddWithValue("@Name", customer.Name);
-        //        command.Parameters.AddWithValue("@Password", customer.Password);
-        //        //open database connection
-        //        connection.Open();
-        //        //execute the insert command
-        //        command.ExecuteNonQuery();
-        //    }
-        //}
-        //deletes a customer by ID
+       
         public void DeleteCustomer(int customerId)
         {
             //using (using) to ensure the connection is closed after use
