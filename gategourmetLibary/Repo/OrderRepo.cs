@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using gategourmetLibrary.Secret;
 using Microsoft.Data.SqlClient;
+using System.Diagnostics;
 
 namespace gategourmetLibrary.Repo
 {
@@ -25,7 +26,7 @@ namespace gategourmetLibrary.Repo
 
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID,O_Made,O_ready,O_paystatus,O_status FROM Ordertable",
+                "SELECT O_ID,O_Made,O_Ready,O_PaySatus FROM OrderTable",
                 sqlConnection);
             /*join orderTable on OrderRecipe.O_ID = ordertable.O_ID  join recipePart on OrderRecipe.R_ID = RecipePart.R_ID",*/
             try
@@ -37,9 +38,9 @@ namespace gategourmetLibrary.Repo
                 {
                     int id = Convert.ToInt32(sqlReader["O_ID"]);
                     DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(sqlReader["O_ready"]);
-                    bool paystatus = Convert.ToBoolean(sqlReader["O_paystatus"]);
-                    string status =  sqlReader["O_status"].ToString();
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
+                    //string status =  sqlReader["O_status"].ToString();
                     //int rID = Convert.ToInt32(sqlReader["R_ID"]);
                     //string howToPrep = sqlReader["R_HowToPrep"].ToString();
                     //string name = sqlReader["R_Name"].ToString();
@@ -47,6 +48,8 @@ namespace gategourmetLibrary.Repo
 
 
                     Order order = new Order(made,ready,id,paystatus);
+                    //get it manually because we dont have it in our DB
+                    order.Status = OrderStatus.Created;
 
                     ordersFromDatabase.Add(id, order);
                 }
@@ -71,24 +74,25 @@ namespace gategourmetLibrary.Repo
 
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                "INSERT INTO ordertable (O_ID, O_Made, O_ready, o_paystatus, O_status) " +
-                "VALUES (@O_ID, @O_Made, @O_ready, @O_paystatus, @O_status)",
+                "INSERT INTO ordertable ( O_Made, O_ready, o_paysatus, O_status) " +
+                "VALUES ( @O_Made, @O_ready, @O_paysatus, @O_status)" +
+                "select scope_identity()",
                 sqlConnection);
 
            
-
-            AddOrderTableCustomert(newOrder.ID, newOrder.CustomerOrder.ID);
-
-            sqlCommand.Parameters.AddWithValue("@O_made", newOrder.OrderMade);
+           
+            Debug.WriteLine(newOrder.OrderMade);
+            sqlCommand.Parameters.AddWithValue("@O_made", newOrder.OrderMade/*.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")*/);
             sqlCommand.Parameters.AddWithValue("@O_status", newOrder.Status);
-            sqlCommand.Parameters.AddWithValue("@O_ready", newOrder.OrderDoneBy);
-            sqlCommand.Parameters.AddWithValue("@O_ID", newOrder.ID);
-            sqlCommand.Parameters.AddWithValue("@O_paystatus", newOrder.paystatus);
+            sqlCommand.Parameters.AddWithValue("@O_ready", newOrder.OrderDoneBy/*.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")*/);
+            sqlCommand.Parameters.AddWithValue("@O_paysatus", newOrder.paystatus);
+            int neworderid = 0;
 
             try
             {
                 sqlConnection.Open();
-                sqlCommand.ExecuteNonQuery();
+                neworderid = Convert.ToInt32(sqlCommand.ExecuteScalar());
+                Debug.WriteLine("test id get"+neworderid);
             }
             catch (SqlException sqlError)
             {
@@ -98,21 +102,17 @@ namespace gategourmetLibrary.Repo
             {
                 sqlConnection.Close();
             }
-
+            if (newOrder.CustomerOrder != null)
+            {
+                AddOrderTableCustomert(neworderid, newOrder.CustomerOrder.ID);
+            }
             foreach (KeyValuePair<int,RecipePart> part in newOrder.Recipe)
             {
-                AddRecipePart(part.Value);
-                AddOrderRecipePart(newOrder.ID, part.Value.ID);
+                AddRecipePart(part.Value,neworderid,part.Value.Ingredients);
               
               
             }
-            foreach (KeyValuePair<int, RecipePart> part in newOrder.Recipe)
-            {
-                foreach(Ingredient i in part.Value.Ingredients)
-                {
-                    AddRecipePartIngredient(part.Value.ID, i.ID);
-                }
-            }
+            
             
 
         }
@@ -176,7 +176,7 @@ namespace gategourmetLibrary.Repo
         {
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-             "INSERT INTO recipePart (R_ID, O_ID) " +
+             "INSERT INTO orderTableRecipePart (R_ID, O_ID) " +
              "VALUES (@R_ID, @O_ID)",
              sqlConnection);
 
@@ -184,6 +184,7 @@ namespace gategourmetLibrary.Repo
             sqlCommand.Parameters.AddWithValue("@R_ID", recipePartID);
             try
             {
+                sqlConnection.Open();
                 sqlCommand.ExecuteNonQuery();
             }
             catch (SqlException sqlError)
@@ -195,24 +196,25 @@ namespace gategourmetLibrary.Repo
                 sqlConnection.Close();
             }
         }
-        public void AddRecipePart(RecipePart rp)
+        public void AddRecipePart(RecipePart rp,int i,List<Ingredient> ingredients)
         {
+            rp.status = "not begun";
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                   "INSERT INTO recipePart (R_ID, R_howToPrep, R_name, R_status) " +
-                   "VALUES (@R_ID, @R_howToPrep, @R_name, @R_status)",
+                   "INSERT INTO recipePart ( R_howToPrep, R_name, R_status) " +
+                   "VALUES ( @R_howToPrep, @R_name, @R_status)" +
+                   "select scope_identity()",
                    sqlConnection);
 
-            sqlCommand.Parameters.AddWithValue("@R_ID", rp.ID);
             sqlCommand.Parameters.AddWithValue("@R_howToprep", rp.Assemble);
-            sqlCommand.Parameters.AddWithValue("@r_name", rp.partName);
+            sqlCommand.Parameters.AddWithValue("@R_Name", rp.partName);
             sqlCommand.Parameters.AddWithValue("@R_status", rp.status);
-
+            int newrecipepartid = 0;
 
             try
             {
                 sqlConnection.Open();
-                sqlCommand.ExecuteNonQuery();
+                newrecipepartid = Convert.ToInt32(sqlCommand.ExecuteScalar());
             }
             catch (SqlException sqlError)
             {
@@ -221,6 +223,13 @@ namespace gategourmetLibrary.Repo
             finally
             {
                 sqlConnection.Close();
+            }
+            AddOrderRecipePart(i,newrecipepartid);
+            foreach (Ingredient ingr in ingredients)
+            {
+
+                AddRecipePartIngredient(newrecipepartid, ingr.ID);
+
             }
         }
         
@@ -239,7 +248,7 @@ namespace gategourmetLibrary.Repo
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             Order order = new Order();
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID,O_Made,O_ready,O_paystatus,O_status FROM Ordertable where O_ID = @O_ID ",
+                "SELECT O_ID,O_Made,O_Ready,O_PaySatus FROM Ordertable where O_ID = @O_ID ",
                 sqlConnection);
             sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
 
@@ -252,15 +261,18 @@ namespace gategourmetLibrary.Repo
                 {
                     int id = Convert.ToInt32(sqlReader["O_ID"]);
                     DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(sqlReader["O_ready"]);
-                    bool paystatus = Convert.ToBoolean(sqlReader["O_paystatus"]);
-                    string status = sqlReader["O_status"].ToString();
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
+                    //string status = sqlReader["O_status"].ToString();
 
 
 
                     order = new Order(made, ready, id, paystatus);
+                    //get it manually because we dont have it in our DB
+                    order.Status = OrderStatus.Created;
 
                 }
+                
 
             }
             catch (SqlException sqlError)
