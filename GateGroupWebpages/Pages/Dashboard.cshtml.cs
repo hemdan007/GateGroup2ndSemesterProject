@@ -4,6 +4,7 @@ using gategourmetLibrary.Models;
 using gategourmetLibrary.Secret;
 using System.Collections.Generic;
 using Microsoft.Data.SqlClient;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace GateGroupWebpages.Pages
 {
@@ -12,12 +13,33 @@ namespace GateGroupWebpages.Pages
         //list to hold orders
         public List<Order> Orders { get; set; }
 
+
+        //bind property to get status filter from query string
+        [BindProperty(SupportsGet = true)]
+        // this ? makes it optional and allows null values
+        public string? statusFilter { get; set; }
+
+        //list of dropdown choices
+        public List<SelectListItem> StatusOptions { get; set; }
+
         //it runs when the page is loaded
         public void OnGet()
         {
             Orders = new List<Order>() ;
+
+            //populate dropdown list
+            StatusOptions = new List<SelectListItem>
+            {
+                //the first part is appears to the customers,
+                //the second part is the value of the choice and here its empty(NOT NULL)
+                new SelectListItem("Choose Status ...", ""),
+                new SelectListItem("Created", "Created"),
+                new SelectListItem( "In Progress", "InProgress"),
+                new SelectListItem("Completed", "Completed"),
+                new SelectListItem("Cancelled", "Cancelled")
+            };
             
-            //get constring from connect class
+            //get constring(DB) from connect class
             string connectionString = new Connect().cstring;
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
@@ -52,6 +74,26 @@ namespace GateGroupWebpages.Pages
                     }
                 }
             }
+
+            //if user has selected a status filter, filter the orders by using LINQ
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                //'out' keyword allows the method to return an additional value through this variable
+                if (Enum.TryParse<OrderStatus>(statusFilter, out var selectedStatus))
+                {
+                    // The expression 'o => o.Status == selectedStatus'
+                    // is a condition (lambda) that checks each order. Only orders that match the selected
+                    // status are kept. ToList() converts the LINQ result back into a List<Order>.
+                    Orders = Orders.Where(o => o.Status == selectedStatus).ToList();
+                }
+            }
+            else
+            {
+                // if no filter is selected, hide orderTable by clearing the list
+                Orders = new List<Order>();
+            }
+
+
 
         }
 
