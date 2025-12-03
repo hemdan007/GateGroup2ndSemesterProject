@@ -42,7 +42,8 @@ namespace gategourmetLibrary.Repo
                     {
                         ID = (int)reader["C_ID"],
                         Name = reader["C_Name"].ToString(),
-                        Password = reader["C_Password"].ToString()
+                        Password = reader["C_Password"].ToString(),
+                        
                     });
                 }
             }
@@ -61,9 +62,7 @@ namespace gategourmetLibrary.Repo
                 command.Parameters.AddWithValue("@id", 56);
                 command.Parameters.AddWithValue("@Name", customer.Name);
                 command.Parameters.AddWithValue("@Password", customer.Password);
-                //command.Parameters.AddWithValue("@Email", customer.Email);
-                //command.Parameters.AddWithValue("@CompanyName", customer.CompanyName);
-                //command.Parameters.AddWithValue("@CVR", customer.CVR);
+                
 
                 connection.Open();
                 command.ExecuteNonQuery();

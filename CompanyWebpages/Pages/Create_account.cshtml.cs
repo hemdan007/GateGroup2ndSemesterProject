@@ -21,6 +21,7 @@ namespace GateGroupWebpages.Pages
 
         public void OnGet()
         {
+            
         }
 
         public IActionResult OnPost()
@@ -41,6 +42,8 @@ namespace GateGroupWebpages.Pages
             };
 
             _customerService.AddCustomer(c);
+
+         
 
             return RedirectToPage("/Index");
         }
