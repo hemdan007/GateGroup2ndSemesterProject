@@ -13,7 +13,7 @@ namespace CompanyWebpages.Pages
         // list that holds all tasks to show in the table
         public List<EmployeeTask> Tasks { get; set; }
 
-        // runs when the page is loaded with On get methos
+        // runs when the page is loaded with On get methods
         public void OnGet()
         {
             // create empty list 
@@ -29,12 +29,12 @@ namespace CompanyWebpages.Pages
                 connection.Open();
 
                 string sql =
-                    @"SELECT erpo.O_ID, erpo.R_ID, rp.R_Name, w.W_Location, erpo.IsCompleted
-                    FROM EmployeeRecipePartOrderTable erpo
-                    INNER JOIN RecipePart rp ON erpo.R_ID = rp.R_ID
-                    LEFT JOIN werehouseRecipePart wrp ON erpo.R_ID = wrp.R_ID
+                    @" SELECT EmployeeRecipePartOrderTable.O_ID, EmployeeRecipePartOrderTable.R_ID, rp.R_Name, w.W_Location
+                    FROM EmployeeRecipePartOrderTable 
+                    INNER JOIN RecipePart rp ON EmployeeRecipePartOrderTable.R_ID = rp.R_ID
+                    LEFT JOIN werehouseRecipePart wrp ON EmployeeRecipePartOrderTable.R_ID = wrp.R_ID
                     LEFT JOIN warehouse w ON wrp.W_ID = w.W_ID
-                    WHERE erpo.E_ID = @employeeId";
+                    WHERE EmployeeRecipePartOrderTable.E_ID = @employeeId";
                 using (SqlCommand command = new SqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@employeeId", employeeId);
