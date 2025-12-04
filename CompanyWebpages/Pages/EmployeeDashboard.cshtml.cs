@@ -63,7 +63,7 @@ namespace CompanyWebpages.Pages
                             int completedIndex = reader.GetOrdinal("R_Status");
                             //task.IsCompleted =
                             //    !reader.IsDBNull(completedIndex) &&
-                            //    reader.GetBoolean(completedIndex);
+                            //    reader.GetBoolean(completedIndex);   lav dem om til enum 
 
                             Tasks.Add(task);
                         }
