@@ -27,7 +27,7 @@ namespace CompanyWebpages.Pages
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-
+                   
                 string sql =
                     @" SELECT EmployeeRecipePartOrderTable.O_ID, EmployeeRecipePartOrderTable.R_ID, rp.R_Name, w.W_Location
                     FROM EmployeeRecipePartOrderTable 
