@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="~/css/SignupCustomer.css" />
     <link rel="stylesheet" href="~/css/CreateAccount.css" />
     <link rel="stylesheet" href="~/css/EmployeeLogin.css" />
+    <link rel="stylesheet" href="~/css/AdminOrderList.css" />
 
     <style>
         body {
@@ -73,11 +74,15 @@
                                             Order overview
                                         </a>
                                     </li>
-                                    @* her kan der senere lægges "Cancel order" side ind *@
+                                    <li>
+                                        <a class="dropdown-item" asp-page="/AdminOrderList">
+                                            Admin orders
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
 
-                            <!-- Customers dropdown -->
+                            <!-- customers dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button"
                                    data-bs-toggle="dropdown" aria-expanded="false">

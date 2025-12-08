@@ -115,6 +115,23 @@ namespace gategourmetLibrary.Repo
             
 
         }
+        // method for cancelling an order 
+        public void CancelOrder(int orderId)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                SqlCommand command = new SqlCommand(
+                    "UPDATE dbo.OrderTable SET O_Status = @Status WHERE O_ID = @Id",
+                    connection);
+
+                command.Parameters.AddWithValue("@Status", "Cancelled");
+                command.Parameters.AddWithValue("@Id", orderId);
+
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
 
 
         public void AddOrderTableCustomert(int orderID,int customerID)
@@ -231,12 +248,7 @@ namespace gategourmetLibrary.Repo
 
             }
         }
-        
-
-
-
-
-
+    
         public void Delete(int orderID)
         {
         }
@@ -304,12 +316,23 @@ namespace gategourmetLibrary.Repo
             return
                  null;
         }
-    
-        //returns the list of all orders
+
+        // returns the list of all orders
         public List<Order> GetAllOrders()
         {
-            return null;
+            // get all orders from the database as a dictionary
+            Dictionary<int, Order> ordersFromDatabase = GetAll();
+
+            // if the dictionary is null, return an empty list to avoid null reference errors
+            if (ordersFromDatabase == null)
+            {
+                return new List<Order>();
+            }
+
+            // convert the dictionary values to a list and return it
+            return new List<Order>(ordersFromDatabase.Values);
         }
+
         public List<Ingredient> GetAllIngredients()
         {
             //temporary list to hold Ingredients

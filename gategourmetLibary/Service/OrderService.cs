@@ -22,6 +22,12 @@ namespace gategourmetLibrary.Service
         {
             return _orderRepo.GetAllOrders();
         }
+
+        public void CancelOrder(int orderId)
+        {
+            _orderRepo.CancelOrder(orderId);
+        }
+
         // adds a new order
         public void AddOrder(Order order)
         {
