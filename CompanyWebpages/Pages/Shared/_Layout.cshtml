@@ -54,7 +54,7 @@
                     <!-- venstre side hovedmenu -->
                     <ul class="navbar-nav me-auto">
 
-                        <!-- home  er altid synlig -->
+                        <!-- home er altid synlig -->
                         <li class="nav-item">
                             <a class="nav-link" asp-area="" asp-page="/Index">Home</a>
                         </li>
@@ -73,7 +73,7 @@
                                             Order overview
                                         </a>
                                     </li>
-                                    @* plads til flere order relaterede sider senere hvis vi tilføjer  *@
+                                    @* her kan der senere lægges "Cancel order" side ind *@
                                 </ul>
                             </li>
 
@@ -92,6 +92,11 @@
                                     <li>
                                         <a class="dropdown-item" asp-page="/SignUpCustommer">
                                             Sign up customer
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-page="/CustomerAdminList">
+                                            Manage / delete customers
                                         </a>
                                     </li>
                                 </ul>
@@ -116,7 +121,6 @@
                                 </span>
                             </li>
                             <li class="nav-item">
-                               
                                 <a class="nav-link" asp-area="" asp-page="/EmployeeLogin">Log out</a>
                             </li>
                         }
