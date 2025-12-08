@@ -122,6 +122,7 @@
                 </div>
 
                     <input type="hidden" value="@DateTime.Now" asp-for="newOrder.OrderMade" />
+                    <input type="hidden" value="@HttpContext.Session.GetString("userid")" asp-for="newOrder.CustomerOrder.ID" />
                     <button type="submit" class="btn btn-primary mt-5">Submit</button>
                 </form>
                 </<div>

@@ -82,7 +82,6 @@ namespace gategourmetLibrary.Repo
 
            
            
-            Debug.WriteLine(newOrder.OrderMade);
             sqlCommand.Parameters.AddWithValue("@O_made", newOrder.OrderMade/*.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")*/);
             sqlCommand.Parameters.AddWithValue("@O_status", newOrder.Status);
             sqlCommand.Parameters.AddWithValue("@O_ready", newOrder.OrderDoneBy/*.ToString("yyyy-MM-ddTHH:mm:ss.fffffff")*/);
@@ -93,7 +92,6 @@ namespace gategourmetLibrary.Repo
             {
                 sqlConnection.Open();
                 neworderid = Convert.ToInt32(sqlCommand.ExecuteScalar());
-                Debug.WriteLine("test id get"+neworderid);
             }
             catch (SqlException sqlError)
             {
@@ -123,11 +121,11 @@ namespace gategourmetLibrary.Repo
         {
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-            "INSERT INTO IngrefientrecipePart (O_ID, C_ID) " +
+            "INSERT INTO OrderTableCustomer (O_ID, C_ID) " +
             "VALUES (@O_ID, @C_ID)",
             sqlConnection);
 
-
+            Debug.WriteLine($"order id is {orderID} customer id is {customerID}");
             sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
             sqlCommand.Parameters.AddWithValue("@C_ID", customerID);
 
