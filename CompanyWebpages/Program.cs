@@ -13,33 +13,28 @@ namespace CompanyWebpages
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Henter connection string fra Connect klassen
+            // get connection string from Connect class
             string connection = new Connect().cstring;
             Debug.WriteLine(connection);
 
             // Razor Pages
             builder.Services.AddRazorPages();
 
-            // Repositories
+            // Repositories that use the connection string
             builder.Services.AddSingleton<IOrderRepo>(sp => new OrderRepo(connection));
             builder.Services.AddSingleton<IEmpolyeeRepo>(sp => new EmployeeRepo(connection));
             builder.Services.AddSingleton<IDepartmentRepo>(sp => new DepartmentRepo(connection));
             builder.Services.AddSingleton<ICustomerRepo>(sp => new CustomerRepo(connection));
 
-            // Services (de får deres repo automatisk via DI)
+            // Services (DI injects the right repo automatically)
             builder.Services.AddSingleton<OrderService>();
             builder.Services.AddSingleton<EmployeeService>();
             builder.Services.AddSingleton<DepartmentService>();
             builder.Services.AddSingleton<CustomerService>();
 
-            // Hvis EmployeeTask også er en service, der skal bruge connection:
-            // builder.Services.AddSingleton<EmployeeTask>(sp => new EmployeeTask(connection));
-
-            // Session
+            // Session setup
             builder.Services.AddDistributedMemoryCache();
             builder.Services.AddSession();
-            builder.Services.AddRazorPages();
-           
 
             var app = builder.Build();
 
@@ -55,7 +50,7 @@ namespace CompanyWebpages
 
             app.UseRouting();
 
-            app.UseSession();      // session skal være før endpoints
+            app.UseSession();      // session must be before endpoints
             app.UseAuthorization();
 
             app.MapRazorPages();
