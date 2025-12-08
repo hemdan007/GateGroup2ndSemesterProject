@@ -1,39 +1,50 @@
-using System; 
-using Microsoft.AspNetCore.Mvc; 
-using Microsoft.AspNetCore.Mvc.RazorPages; 
-using System.Collections.Generic; 
-using gategourmetLibrary.Models; 
-using Microsoft.Data.SqlClient; 
+using System;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Collections.Generic;
+using gategourmetLibrary.Models;
+using Microsoft.Data.SqlClient;
 using gategourmetLibrary.Secret;
+using Microsoft.AspNetCore.Http;
 
 namespace CompanyWebpages.Pages
 {
     public class EmployeeDashboardModel : PageModel
     {
-        // liste af alle opgaver der skal vises på siden
+        // list of all tasks that would be shown on the page
         public List<EmployeeTask> Tasks { get; set; }
 
-        // kører når siden indlæses 
-        public void OnGet()
+        // runs when the page is loaded
+        public IActionResult OnGet()
         {
-            // opretter en tom liste som vi fylder med opgaver fra databasen
+            // read user id from session (employee id here )
+            string userIdString = HttpContext.Session.GetString("userid");
+            string isLoggedIn = HttpContext.Session.GetString("IsLoggedIn");
+
+            // if user is not logged in or id is missing redirect to login
+            if (string.IsNullOrEmpty(userIdString) || isLoggedIn != "true")
+            {
+                return RedirectToPage("/EmployeeLogin");
+            }
+
+            // convert user id from an string to an int
+            int employeeId = Convert.ToInt32(userIdString);
+
+            // create empty list that we will fill with tasks from database
             Tasks = new List<EmployeeTask>();
 
-            // midlertidigt medarbejder id, indtil login virker
-            int employeeId = 1;
-
-            // henter connection string fra vores Secret klasse
+            // get connection string from secret class
             string connectionString = new Connect().cstring;
 
-            // åbner en ny sql forbindelse
+            // open a new sql connection
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open(); // åbner forbindelsen til databasen
+                connection.Open(); // open database connection
 
-                // sql der henter ordre id, recipe del, navn, lokation og status
+                // sql that gets order id, recipe part, name, location and status
                 string sql =
                     @" SELECT EmployeeRecipePartOrderTable.O_ID, 
-                    EmployeeRecipePartOrderTable.R_ID, rp.R_Name, w.W_Location, rp.R_Status
+                    EmployeeRecipePartOrderTable.R_ID, rp.R_Name,w.W_Location, rp.R_Status
                     FROM EmployeeRecipePartOrderTable 
                     INNER JOIN RecipePart rp 
                     ON EmployeeRecipePartOrderTable.R_ID = rp.R_ID
@@ -43,123 +54,127 @@ namespace CompanyWebpages.Pages
                     ON wrp.W_ID = w.W_ID
                     WHERE EmployeeRecipePartOrderTable.E_ID = @employeeId";
 
-                // gør sql klar til at blive kørt
+                // prepare sql command
                 using (SqlCommand command = new SqlCommand(sql, connection))
                 {
-                    // indsætter medarbejderid i sql parameter
+                    // insert employee id in sql parameter
                     command.Parameters.AddWithValue("@employeeId", employeeId);
 
-                    // kører sql og får et resultatsæt tilbage
+                    // execute sql and get result set
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        // læser hver række en ad gangen
+                        // read each row one at a time
                         while (reader.Read())
                         {
-                            // opretter en ny task klasse til denne række
+                            // create new task object for this row
                             EmployeeTask task = new EmployeeTask();
 
-                            // sætter ordre id
+                            // set order id
                             task.OrderId = reader.GetInt32(reader.GetOrdinal("O_ID"));
-                            // sætter recipe part id
+
+                            // set recipe part id
                             task.RecipePartId = reader.GetInt32(reader.GetOrdinal("R_ID"));
 
-                            // henter navnet på opgaven (recipe part name)
+                            // set task name (recipe part name)
                             task.TaskName = reader["R_Name"].ToString();
 
-                            // finder index for W_Location kolonne
+                            // get index for W_Location 
                             int locationIndex = reader.GetOrdinal("W_Location");
 
-                            // tjekker om der findes en lokation i databasen
+                            // checks if there is a location value
                             if (!reader.IsDBNull(locationIndex))
                             {
-                                // sætter location hvis den findes
                                 task.Location = reader.GetString(locationIndex);
                             }
                             else
                             {
-                                // standardtekst hvis der ikke er en lokation
                                 task.Location = "Not registered";
                             }
 
-                            // finder index for R_Status
+                            // get index for R_Status 
                             int statusIndex = reader.GetOrdinal("R_Status");
 
-                            // tjekker om status har en værdi i databasen
+                            // check if status has a value
                             if (!reader.IsDBNull(statusIndex))
                             {
-                                // læser status som tekst created eller completed
                                 string statusText = reader.GetString(statusIndex);
 
-                                OrderStatus orderStatus; // enum variabel til resultatet
+                                OrderStatus orderStatus;
 
-                                // prøver at konvertere tekst til enum
+                                // try to convert status text to enum
                                 if (Enum.TryParse<OrderStatus>(statusText, out orderStatus))
                                 {
-                                    task.Status = orderStatus; // sætter enum i task
+                                    task.Status = orderStatus;
                                 }
                                 else
                                 {
-                                    // hvis teksten ikke matcher enum navne
                                     task.Status = OrderStatus.Created;
                                 }
                             }
                             else
                             {
-                                // hvis status er tom i databasen
                                 task.Status = OrderStatus.Created;
                             }
 
-                            // sætter IsCompleted  true hvis enum er completed
+                            // set IsCompleted to true if status is completed
                             task.IsCompleted = (task.Status == OrderStatus.Completed);
 
-                            // tilføjer task til listen
+                            // add task to list
                             Tasks.Add(task);
                         }
                     }
                 }
             }
+
+            // return page with tasks list filled
+            return Page();
         }
 
-        // POST handler når medarbejder trykker mark done
+        // POST handler when employee clicks "mark done"
         public IActionResult OnPostMarkDone(int orderId, int recipePartId)
         {
-            // midlertidigt medarbejder id
-            int employeeId = 1;
+            // read user id from session
+            string userIdString = HttpContext.Session.GetString("userid");
+            string isLoggedIn = HttpContext.Session.GetString("IsLoggedIn");
 
-            // henter connection string
+            // if not logged in, send back to login page
+            if (string.IsNullOrEmpty(userIdString) || isLoggedIn != "true")
+            {
+                return RedirectToPage("/EmployeeLogin");
+            }
+
+            int employeeId = Convert.ToInt32(userIdString);
+
+            // get connection string
             string connectionString = new Connect().cstring;
 
-            // åbner sql forbindelsen
+            // open sql connection
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                connection.Open(); // åbner databaseforbindelsen
+                connection.Open();
 
-                // sql der opdaterer status på recipe part til completed
+                // sql that updates recipe part status to Completed
                 string sql =
                     @"UPDATE rp
                     SET rp.R_Status = @status
                     FROM RecipePart rp
-                    INNER JOIN EmployeeRecipePartOrderTable ert
-                    ON rp.R_ID = ert.R_ID
+                    INNER JOIN EmployeeRecipePartOrderTable ert ON rp.R_ID = ert.R_ID
                     WHERE ert.E_ID = @employeeId 
                     AND ert.O_ID = @orderId 
                     AND ert.R_ID = @recipePartId";
 
-                // gør sql klar til at blive kørt
                 using (SqlCommand command = new SqlCommand(sql, connection))
                 {
-                    // indsætter enum som tekst i databasen completed
                     command.Parameters.AddWithValue("@status", OrderStatus.Completed.ToString());
-                    // indsætter id i sql
                     command.Parameters.AddWithValue("@employeeId", employeeId);
                     command.Parameters.AddWithValue("@orderId", orderId);
                     command.Parameters.AddWithValue("@recipePartId", recipePartId);
 
-                    command.ExecuteNonQuery(); // kører opdateringen
+                    command.ExecuteNonQuery();
                 }
             }
 
-            // loader siden igen
+            // reload page so updated status is shown
             return RedirectToPage();
         }
     }
