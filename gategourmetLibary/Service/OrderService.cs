@@ -27,7 +27,7 @@ namespace gategourmetLibrary.Service
         {
             if(order != null)
             {
-                if ((order.OrderDoneBy - order.OrderMade).TotalDays >= 6.9)
+                if ((order.OrderDoneBy - order.OrderMade).TotalDays >= 6)
                 {
                     List<int> invalidRecipeParts = new List<int>();
                     foreach(KeyValuePair<int,RecipePart> rp in order.Recipe)
