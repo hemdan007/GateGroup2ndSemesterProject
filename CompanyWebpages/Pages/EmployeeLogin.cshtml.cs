@@ -40,7 +40,7 @@ namespace CompanyWebpages.Pages
 
 
 
-                return RedirectToPage("/Dashboard");
+                return RedirectToPage("/EmployeeDashboard");
                 //return RedirectToPage("/NewOrder");
 
             }
