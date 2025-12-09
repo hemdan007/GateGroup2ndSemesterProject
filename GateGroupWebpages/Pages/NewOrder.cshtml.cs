@@ -88,7 +88,6 @@ namespace GateGroupWebpages.Pages
         public IActionResult OnPost()
         {
             
-            recipePart1.Ingredients.Add(new Ingredient(Ingredient1));
             recipePart2.Ingredients.Add(new Ingredient(Ingredient2));
             recipePart3.Ingredients.Add(new Ingredient(Ingredient3));
             recipePart4.Ingredients.Add(new Ingredient(Ingredient4));
