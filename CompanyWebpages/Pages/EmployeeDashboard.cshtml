@@ -16,53 +16,62 @@
                 <th>Location</th>
                 <th>Status</th>
                 <th>Actions</th>
+                <th>Update location</th>  
             </tr>
         </thead>
         <tbody>
 
-        @if (Model.Tasks != null && Model.Tasks.Any())
-        {
-            foreach (EmployeeTask task in Model.Tasks)
+            @if (Model.Tasks != null && Model.Tasks.Any())
+            {
+                foreach (EmployeeTask task in Model.Tasks)
+                {
+                    <tr>
+                        <td>@task.OrderId</td>
+                        <td>@task.TaskName</td>
+                        <td>@task.Location</td>
+                        <td>
+                            @if (task.IsCompleted)
+                            {
+                                <span class="badge bg-success">Done</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">In Progress</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!task.IsCompleted)
+                            {
+                                <form method="post" asp-page-handler="MarkDone" class="d-inline">
+                                    <input type="hidden" name="orderId" value="@task.OrderId" />
+                                    <input type="hidden" name="recipePartId" value="@task.RecipePartId" />
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        Mark done
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Completed</span>
+                            }
+                        </td>
+
+                        <td>
+                            <a class="btn btn-sm btn-outline-info"
+                               asp-page="/EmployeeTaskLocation"
+                               asp-route-recipePartId="@task.RecipePartId">
+                                Change location
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
             {
                 <tr>
-                    <td>@task.OrderId</td>
-                    <td>@task.TaskName</td>
-                    <td>@task.Location</td>
-                    <td>
-                        @if (task.IsCompleted)
-                        {
-                            <span class="badge bg-success">Done</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning text-dark">In Progress</span>
-                        }
-                    </td>
-                    <td>
-                        @if (!task.IsCompleted)
-                        {
-                            <form method="post" asp-page-handler="MarkDone" class="d-inline">
-                                <input type="hidden" name="orderId" value="@task.OrderId" />
-                                <input type="hidden" name="recipePartId" value="@task.RecipePartId" />
-                                <button type="submit" class="btn btn-sm btn-success">
-                                    Mark done
-                                </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <span class="text-muted">Completed</span>
-                        }
-                    </td>
+                    <td colspan="6" class="text-muted">No tasks assigned.</td>
                 </tr>
             }
-        }
-        else
-        {
-            <tr>
-                <td colspan="5" class="text-muted">No tasks assigned.</td>
-            </tr>
-        }
         </tbody>
     </table>
 </div>
