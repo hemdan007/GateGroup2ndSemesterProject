@@ -40,6 +40,14 @@ namespace gategourmetLibrary.Repo
         Dictionary<int, Ingredient> GetAllIngredients();
         Dictionary<int, string> GetAllAllergies();
 
+        // returns the warehouse where a given recipe part is stored
+        Warehouse GetRecipePartLocation(int recipePartId);
+
+        // updates the warehouse location for a given recipe part
+        void UpdateRecipePartLocation(int recipePartId, int warehouseId);
+
+        // returns all warehouses (freezer, fridge, dry storage, mm)
+        List<Warehouse> GetAllWarehouses();
 
         //void Add(Order order);
         //Order Get(int orderID);

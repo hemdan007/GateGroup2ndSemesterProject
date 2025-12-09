@@ -476,5 +476,116 @@ namespace gategourmetLibrary.Repo
 
             return allergiesFromDatabase;
         }
+
+
+
+        // returns all warehouses freezer, fridge, dry storage
+        public List<Warehouse> GetAllWarehouses()
+        {
+            List<Warehouse> warehouses = new List<Warehouse>();
+
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                SqlCommand command = new SqlCommand(
+                    "SELECT W_ID, W_Name, W_Type, W_Location FROM warehouse",
+                    connection);
+
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    Warehouse warehouse = new Warehouse();
+                    warehouse.ID = Convert.ToInt32(reader["W_ID"]);
+                    warehouse.Name = reader["W_Name"].ToString();
+                    warehouse.Location = reader["W_Location"].ToString();
+
+                    // map W_Type string to enum WarehouseType
+                    WarehouseType type;
+                    if (Enum.TryParse(reader["W_Type"].ToString(), out type))
+                    {
+                        warehouse.Type = type;
+                    }
+
+                    warehouses.Add(warehouse);
+                }
+            }
+
+            return warehouses;
+        }
+
+        // returns the warehouse where a given recipe part is stored
+        public Warehouse GetRecipePartLocation(int recipePartId)
+        {
+            Warehouse warehouse = null;
+
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                SqlCommand command = new SqlCommand(
+                    "SELECT w.W_ID, w.W_Name, w.W_Type, w.W_Location " +
+                    "FROM werehouseRecipePart wrp " +
+                    "JOIN warehouse w ON wrp.W_ID = w.W_ID " +
+                    "WHERE wrp.R_ID = @R_ID",
+                    connection);
+
+                command.Parameters.AddWithValue("@R_ID", recipePartId);
+
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.Read())
+                {
+                    warehouse = new Warehouse();
+                    warehouse.ID = Convert.ToInt32(reader["W_ID"]);
+                    warehouse.Name = reader["W_Name"].ToString();
+                    warehouse.Location = reader["W_Location"].ToString();
+
+                    WarehouseType type;
+                    if (Enum.TryParse(reader["W_Type"].ToString(), out type))
+                    {
+                        warehouse.Type = type;
+                    }
+                }
+            }
+
+            return warehouse;
+        }
+
+        // updates the warehouse location for a given recipe part 
+        public void UpdateRecipePartLocation(int recipePartId, int warehouseId)
+        {
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                // try update existing entry
+                SqlCommand update = new SqlCommand(
+                    "UPDATE werehouseRecipePart " +
+                    "SET W_ID = @W_ID " +
+                    "WHERE R_ID = @R_ID",
+                    connection);
+
+                update.Parameters.AddWithValue("@W_ID", warehouseId);
+                update.Parameters.AddWithValue("@R_ID", recipePartId);
+
+                int rows = update.ExecuteNonQuery();
+
+                // if there is no row updated then insert new record
+                if (rows == 0)
+                {
+                    SqlCommand insert = new SqlCommand(
+                        "INSERT INTO werehouseRecipePart (W_ID, R_ID) " +
+                        "VALUES (@W_ID, @R_ID)",
+                        connection);
+
+                    insert.Parameters.AddWithValue("@W_ID", warehouseId);
+                    insert.Parameters.AddWithValue("@R_ID", recipePartId);
+
+                    insert.ExecuteNonQuery();
+                }
+            }
+        }
     }
 }
+    
+
