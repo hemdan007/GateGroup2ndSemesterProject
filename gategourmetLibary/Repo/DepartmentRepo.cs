@@ -68,16 +68,23 @@ namespace gategourmetLibrary.Repo
                     connection.Open();
 
                     using (SqlCommand command = new SqlCommand(
-                     "select orderTableRecipePart.O_ID as OederRecip, ingredient.I_Quntity as Quntity, ingredient.I_ID as Ingerdient ID, ingredient.I_Name as Name, ingredient.I_ExpireDate as ExpireDate," +
-                     "warehouse.W_ID as Warehouse ID, warehouse.W_Name as Warehouse Name, warehouse.W_Location as warehouse Location" +
-                     "from orderTableRecipePart" +
-                     "join RecipePart on RecipePart.R_ID = orderTableRecipePart.R_ID" +
-                     "join IngrefientrecipePart on RecipePart.R_ID = IngrefientrecipePart.R_ID" +
-                     "join ingredient on ingredient.I_ID = IngrefientrecipePart.I_ID" +
-                     "join warehouseIngredient on warehouseIngredient.I_ID = ingredient.I_ID" +
-                     "join warehouse on warehouse.W_ID = warehouseIngredient.I_ID" +
-                      "where O_ID = @id" ,
-                        connection))
+ "SELECT orderTableRecipePart.O_ID AS [Order ID], " +
+ "ingredient.I_Quntity AS [Ingredient Quantity], " +
+ "ingredient.I_ID AS [Ingredient ID], " +
+ "ingredient.I_Name AS [Ingredient Name], " +
+ "ingredient.I_ExpireDate AS [Ingredient ExpireDate], " +
+ "warehouse.W_ID AS [Warehouse ID], " +
+ "warehouse.W_Name AS [Warehouse Name], " +
+ "warehouse.W_Location AS [Warehouse Location] " +
+ "FROM orderTableRecipePart " +
+ "JOIN RecipePart ON RecipePart.R_ID = orderTableRecipePart.R_ID " +
+ "JOIN IngrefientrecipePart ON RecipePart.R_ID = IngrefientrecipePart.R_ID " +
+ "JOIN ingredient ON ingredient.I_ID = IngrefientrecipePart.I_ID " +
+ "JOIN warehouseIngredient ON warehouseIngredient.I_ID = ingredient.I_ID " +
+ "JOIN warehouse ON warehouse.W_ID = warehouseIngredient.W_ID " +
+ "WHERE orderTableRecipePart.O_ID = @id",
+ connection)
+)
                     {
                         command.Parameters.AddWithValue("@id", orderId);
 
@@ -87,7 +94,7 @@ namespace gategourmetLibrary.Repo
                             {
                                 OrderItem item = new OrderItem();
 
-                                item.OrderItemId = (int)reader["OederRecip"];
+                                item.OrderItemId = (int)reader["Order ID"];
                                 item.OrderId = orderId;
                                 item.IngredientId = (int)reader["Ingerdient ID"];
                                 item.Quantity = (int)reader["Quntity"];
@@ -95,17 +102,17 @@ namespace gategourmetLibrary.Repo
 
                                 item.Ingredient = new Ingredient
                                 {
-                                    ID = (int)reader["ingredient.I_ID"],
-                                    Name = reader["ingredient.I_Name"].ToString(),
-                                    ExpireDate = (DateTime)reader["ingredient.I_expireDate"],
-                                    Quantity = (int)reader["ingredient.I_quntity"]
+                                    ID = (int)reader["Ingerdient ID"],
+                                    Name = reader["ingredient Name"].ToString(),
+                                    ExpireDate = (DateTime)reader["ingredient ExpireDate"],
+                                    Quantity = (int)reader["ingredient Quntity"]
                                 };
 
                                 item.Warehouse = new Warehouse
                                 {
-                                    ID = (int)reader["warehouse.W_ID"],
-                                    Name = reader["warehouse.W_Name"].ToString(),
-                                    Location = reader["warehouse.W_Location"].ToString()
+                                    ID = (int)reader["Warehouse ID"],
+                                    Name = reader["Warehouse Name"].ToString(),
+                                    Location = reader["warehouse Location"].ToString()
                                 };
 
                                 items.Add(item);
