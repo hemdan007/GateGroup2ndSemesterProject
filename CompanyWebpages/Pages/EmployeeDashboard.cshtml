@@ -7,6 +7,29 @@
 
 <h2 class="mb-3" style="font-family:'Playfair Display',serif;">My Tasks</h2>
 
+@{
+    // check if there are any tasks without a registered warehouse location
+    bool hasUnassigned = false;
+    if (Model.Tasks != null)
+    {
+        foreach (EmployeeTask t in Model.Tasks)
+        {
+            if (t.Location == "Not registered")
+            {
+                hasUnassigned = true;
+                break;
+            }
+        }
+    }
+}
+
+@if (hasUnassigned)
+{
+    <div class="alert alert-warning">
+        Some tasks do not have a warehouse assigned yet.
+    </div>
+}
+
 <div class="table-responsive">
     <table class="table align-middle shadow-sm text-white">
         <thead class="text-white">
@@ -16,7 +39,7 @@
                 <th>Location</th>
                 <th>Status</th>
                 <th>Actions</th>
-                <th>Update location</th>  
+                <th>Update location</th>
             </tr>
         </thead>
         <tbody>
@@ -28,7 +51,27 @@
                     <tr>
                         <td>@task.OrderId</td>
                         <td>@task.TaskName</td>
-                        <td>@task.Location</td>
+
+                        <td>
+                            @* show colored badge based on warehouse type *@
+                            @if (task.Location == "Freezer")
+                            {
+                                <span class="badge bg-primary">Freezer</span>
+                            }
+                            else if (task.Location == "Fridge")
+                            {
+                                <span class="badge bg-success">Fridge</span>
+                            }
+                            else if (task.Location == "Dry")
+                            {
+                                <span class="badge bg-warning text-dark">Dry</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Not registered</span>
+                            }
+                        </td>
+
                         <td>
                             @if (task.IsCompleted)
                             {

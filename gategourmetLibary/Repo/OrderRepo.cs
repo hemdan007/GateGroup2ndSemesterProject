@@ -6,18 +6,20 @@ using System.Diagnostics;
 
 namespace gategourmetLibrary.Repo
 {
+    // Repository class that handles all database operations related to orders.
+    // This class is responsible for reading and writing order data and related data
+    // (customers, recipe parts, ingredients, warehouses) to the sql database.
     public class OrderRepo : IOrderRepo
     {
         // connection string to the database
         private readonly string _connectionString;
 
-        // constructor  gets connection string from outside
+        // constructor gets connection string from outside
         public OrderRepo(string connection)
         {
             _connectionString = connection;
         }
 
-        
         // Gets all orders from the database as a dictionary.
         public Dictionary<int, Order> GetAll()
         {
@@ -73,7 +75,6 @@ namespace gategourmetLibrary.Repo
             return ordersFromDatabase;
         }
 
-        
         // Returns all orders as a list 
         public List<Order> GetAllOrders()
         {
@@ -134,7 +135,6 @@ namespace gategourmetLibrary.Repo
         }
 
         // Method for cancelling an order and updates status to cancelled in the database
-        
         public void CancelOrder(int orderId)
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
@@ -151,6 +151,7 @@ namespace gategourmetLibrary.Repo
                 command.ExecuteNonQuery();
             }
         }
+
         // Links order to customer in junction table OrderTableCustomer.
         public void AddOrderTableCustomert(int orderID, int customerID)
         {
@@ -180,6 +181,7 @@ namespace gategourmetLibrary.Repo
             }
         }
 
+        // adds one relation between a recipe and an ingredient
         public void AddRecipePartIngredient(int recipeID, int ingredientID)
         {
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
@@ -206,6 +208,7 @@ namespace gategourmetLibrary.Repo
             }
         }
 
+        // adds one relation between an order and a recipe part
         public void AddOrderRecipePart(int orderID, int recipePartID)
         {
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
@@ -232,6 +235,7 @@ namespace gategourmetLibrary.Repo
             }
         }
 
+        // adds a recipe part and its ingredients, then links it to an order
         public void AddRecipePart(RecipePart recipePart, int orderId, List<Ingredient> ingredients)
         {
             recipePart.status = "not begun";
@@ -385,11 +389,13 @@ namespace gategourmetLibrary.Repo
         //delete an order by its ID 
         public void DeleteOrder(int orderID)
         {
+            // not implemented in this project
         }
 
         //update an existing order by its ID 
         public void UpdateOrder(int orderID, Order updatedOrder)
         {
+            // not implemented in this project
         }
 
         //returns a list of recipe parts for a specific order by orderID
@@ -477,17 +483,17 @@ namespace gategourmetLibrary.Repo
             return allergiesFromDatabase;
         }
 
-
-
-        // returns all warehouses freezer, fridge, dry storage
+        // returns all warehouses (for example freezer, fridge, dry storage)
         public List<Warehouse> GetAllWarehouses()
         {
+            // list that will hold all warehouses from the database
             List<Warehouse> warehouses = new List<Warehouse>();
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
+                // select all warehouses from the warehouse table
                 SqlCommand command = new SqlCommand(
-                    "SELECT W_ID, W_Name, W_Type, W_Location FROM warehouse",
+                    "SELECT W_ID, W_Name, W_Type, W_Location FROM dbo.warehouse",
                     connection);
 
                 connection.Open();
@@ -495,44 +501,52 @@ namespace gategourmetLibrary.Repo
 
                 while (reader.Read())
                 {
+                    // create a new warehouse object for each row
                     Warehouse warehouse = new Warehouse();
                     warehouse.ID = Convert.ToInt32(reader["W_ID"]);
                     warehouse.Name = reader["W_Name"].ToString();
                     warehouse.Location = reader["W_Location"].ToString();
 
-                    // map W_Type string to enum WarehouseType
+                    // map W_Type (string in database) to WarehouseType enum in C#
                     WarehouseType type;
-                    if (Enum.TryParse(reader["W_Type"].ToString(), out type))
+                    if (Enum.TryParse<WarehouseType>(reader["W_Type"].ToString(), true, out type))
                     {
                         warehouse.Type = type;
                     }
 
+                    // add the warehouse to the list
                     warehouses.Add(warehouse);
                 }
             }
 
+            // return the list of all warehouses
             return warehouses;
         }
 
-        // returns the warehouse where a given recipe part is stored
+        // returns the warehouse where a specific recipe part is currently stored
         public Warehouse GetRecipePartLocation(int recipePartId)
         {
+            // default value is null if no location is found
             Warehouse warehouse = null;
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
+                // join between the junction table and warehouse
+                // to find the warehouse for a given recipe part (R_ID)
                 SqlCommand command = new SqlCommand(
                     "SELECT w.W_ID, w.W_Name, w.W_Type, w.W_Location " +
-                    "FROM werehouseRecipePart wrp " +
-                    "JOIN warehouse w ON wrp.W_ID = w.W_ID " +
+                    "FROM dbo.werehouseRecipePart wrp " +
+                    "JOIN dbo.warehouse w ON wrp.W_ID = w.W_ID " +
                     "WHERE wrp.R_ID = @R_ID",
                     connection);
 
+                // recipe part id parameter
                 command.Parameters.AddWithValue("@R_ID", recipePartId);
 
                 connection.Open();
                 SqlDataReader reader = command.ExecuteReader();
 
+                // if we find a row, we create a warehouse object
                 if (reader.Read())
                 {
                     warehouse = new Warehouse();
@@ -541,26 +555,27 @@ namespace gategourmetLibrary.Repo
                     warehouse.Location = reader["W_Location"].ToString();
 
                     WarehouseType type;
-                    if (Enum.TryParse(reader["W_Type"].ToString(), out type))
+                    if (Enum.TryParse<WarehouseType>(reader["W_Type"].ToString(), true, out type))
                     {
                         warehouse.Type = type;
                     }
                 }
             }
 
+            // this is either a warehouse object or null if no location exists yet
             return warehouse;
         }
 
-        // updates the warehouse location for a given recipe part 
+        // updates the warehouse location for a given recipe part
         public void UpdateRecipePartLocation(int recipePartId, int warehouseId)
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
 
-                // try update existing entry
+                // first we try to update an existing row in the junction table
                 SqlCommand update = new SqlCommand(
-                    "UPDATE werehouseRecipePart " +
+                    "UPDATE dbo.werehouseRecipePart " +
                     "SET W_ID = @W_ID " +
                     "WHERE R_ID = @R_ID",
                     connection);
@@ -570,11 +585,11 @@ namespace gategourmetLibrary.Repo
 
                 int rows = update.ExecuteNonQuery();
 
-                // if there is no row updated then insert new record
+                // if no rows were updated, it means there is no entry yet, then we insert a new row into the junction table
                 if (rows == 0)
                 {
                     SqlCommand insert = new SqlCommand(
-                        "INSERT INTO werehouseRecipePart (W_ID, R_ID) " +
+                        "INSERT INTO dbo.werehouseRecipePart (W_ID, R_ID) " +
                         "VALUES (@W_ID, @R_ID)",
                         connection);
 
@@ -587,5 +602,3 @@ namespace gategourmetLibrary.Repo
         }
     }
 }
-    
-
