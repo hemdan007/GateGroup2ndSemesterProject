@@ -34,22 +34,34 @@ namespace GateGroupWebpages.Pages.Shared
         public IActionResult OnPost()
         {
             Customer cust = _cs.GetCustomer( Convert.ToInt32(UserID));
-            if (Password == cust.Password && UserID != null)
+
+            try
             {
-                HttpContext.Session.SetString("IsLoggedIn", "true"); // Gem i session
-                HttpContext.Session.SetString("username", $"{cust.Name}"); // Gem i session
-                HttpContext.Session.SetString("userid", $"{cust.ID}");
+                if (Password == cust.Password && UserID != null)
+                {
+                    HttpContext.Session.SetString("IsLoggedIn", "true"); // Gem i session
+                    HttpContext.Session.SetString("username", $"{cust.Name}"); // Gem i session
+                    HttpContext.Session.SetString("userid", $"{cust.ID}");
 
+                    return RedirectToPage("/Dashboard");
+                    //return RedirectToPage("/NewOrder");
 
-
-                return RedirectToPage("/Dashboard");
-                //return RedirectToPage("/NewOrder");
-
+                }
+                else
+                {
+                    return Page();
+                }
             }
+            catch(NullReferenceException ex)
+            {
+                throw new Exception ($"{ex.Message}");
+                ErrorMessage = "Incorrect password, please try again.";
+                return Page();
+            }
+           
+            
+            
 
-            // Hvis password IKKE er korrekt
-            ErrorMessage = "Incorrect password, please try again.";
-            return Page();
 
         }
        
