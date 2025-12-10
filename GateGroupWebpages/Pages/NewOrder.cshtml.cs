@@ -103,6 +103,7 @@ namespace GateGroupWebpages.Pages
 
 
         }
+         
 
         public IActionResult OnGet()
         {
@@ -172,6 +173,21 @@ namespace GateGroupWebpages.Pages
                                 {
                                     Debug.WriteLine("order triggers your allergie");
                                     ErrorMessage = $"{i.Name} has one of your {a.Value} allerie";
+                                    newOrder.OrderMade = DateTime.Now;
+                                    newOrder.OrderDoneBy = DateTime.Now.AddDays(7).Date;
+                                    Ingredients = _os.GetAllIngredients();
+                                    Dictionary<int, string> Alleries = _os.GetAllAllergies();
+
+                                    IngredientOptions = new List<SelectListItem>();
+                                    foreach (KeyValuePair<int, Ingredient> ikv in Ingredients)
+                                    {
+                                        IngredientOptions.Add(new SelectListItem(ikv.Value.Name, ikv.Value.ID.ToString()));
+                                    }
+                                    AllerieOptions = new List<SelectListItem>();
+                                    foreach (KeyValuePair<int, string> akv in Alleries)
+                                    {
+                                        AllerieOptions.Add(new SelectListItem(akv.Value, akv.Key.ToString()));
+                                    }
                                     return Page();
                                 }
                             }
@@ -187,6 +203,21 @@ namespace GateGroupWebpages.Pages
             }
             catch (Exception ex)
             {
+                newOrder.OrderMade = DateTime.Now;
+                newOrder.OrderDoneBy = DateTime.Now.AddDays(7).Date;
+                Ingredients = _os.GetAllIngredients();
+                Dictionary<int, string> Alleries = _os.GetAllAllergies();
+
+                IngredientOptions = new List<SelectListItem>();
+                foreach (KeyValuePair<int, Ingredient> ikv in Ingredients)
+                {
+                    IngredientOptions.Add(new SelectListItem(ikv.Value.Name, ikv.Value.ID.ToString()));
+                }
+                AllerieOptions = new List<SelectListItem>();
+                foreach (KeyValuePair<int, string> akv in Alleries)
+                {
+                    AllerieOptions.Add(new SelectListItem(akv.Value, akv.Key.ToString()));
+                }
                 ErrorMessage = $"{ex.Message}";
                 return Page();
 
