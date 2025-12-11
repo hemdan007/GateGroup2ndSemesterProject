@@ -5,17 +5,29 @@ using gategourmetLibrary.Secret;
 using gategourmetLibrary.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.SqlClient;
 
 namespace CompanyWebpages.Pages
 {
     // admin page that shows all orders and allows cancelling them
     public class AdminOrderListModel : PageModel
     {
+
         // list with all orders to show in the table
         public List<Order> Orders { get; set; }
 
         // status message shown after cancel
         public string StatusMessage { get; set; }
+
+        //bind property to get emp filter from query string
+        [BindProperty(SupportsGet = true)]
+        // this ? makes it optional and allows null values
+        public string? empFilter { get; set; }
+
+        //dropdown list of employees
+        public List<SelectListItem> Filter { get; set; }
+
 
         // service that handles order logic
         private readonly OrderService _orderService;
@@ -28,17 +40,96 @@ namespace CompanyWebpages.Pages
             _orderService = new OrderService(orderRepo);
         }
 
-        // hj�lper method that loads only non cancelled orders
-        private void LoadAllOrders()
-        {
-            Orders = _orderService.GetAllOrders();
-        }
+        //// hj�lper method that loads only non cancelled orders
+        //private void LoadAllOrders()
+        //{
+        //    Orders = _orderService.GetAllOrders();
+        //}
 
-        // runs when the page is loaded with a get metode 
+        // runs when the page is loaded with a get method 
         public void OnGet()
         {
-            LoadAllOrders();
+            // load all orders
+            Orders = _orderService.GetAllOrders();
+
+            //initialize the filter list
+            Filter = new List<SelectListItem>();
+
+            //get constring(DB) from connect class
+            string connectionString = new Connect().cstring;
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                //open connection
+                conn.Open();
+
+                // SQL query to select orders
+                string sql = @"SELECT E_ID, E_Name FROM Employee";
+
+                //execute command
+                using (SqlCommand command = new SqlCommand(sql, conn))
+                //read data
+                using (SqlDataReader reader = command.ExecuteReader())
+
+                {
+                    //loop through the data
+                    while (reader.Read())
+                    {
+                        //add data to the filter list
+                        Filter.Add(new SelectListItem(
+                            // ID as value, Name as text
+                            reader["E_Name"].ToString(),
+                            reader["E_ID"].ToString()
+
+                       ));
+                    }
+                }
+            }
+
+            //if admin has selected an employee, filter employee´s orders
+            if (!string.IsNullOrEmpty(empFilter))
+            {
+                //convert empFilter to int from string
+                int empId = int.Parse(empFilter);
+
+                //list to hold employee order IDs
+                List<int> empOrdersIds = new List<int>();
+
+                //get constring(DB) again from connect class 
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    //open connection
+                    conn.Open();
+
+                    //sql: get all order IDs for the selected employee
+                    string sql = @"SELECT O_ID FROM EmployeeRecipePartOrderTable WHERE E_ID = @id";
+
+                    //create sql command
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        //add parameter for employee id to avoid sql injection
+                        cmd.Parameters.AddWithValue("@id", empId);
+
+                        //execute command and read results
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            //loop through results and add order IDs to the list
+                            while (reader.Read())
+                            {
+                                //add order ID to the list
+                                empOrdersIds.Add(reader.GetInt32(0));
+                            }
+                        }
+                    }
+                }
+                //filter orders to keep only those that match the employee order IDs
+                Orders = Orders
+                    .Where(o => empOrdersIds.Contains(o.ID)) // keep only matching orders
+                    .ToList(); // convert back to list
+
+            }
         }
+
+        
 
         // runs when the cancel form is posted
         public IActionResult OnPostCancel(int orderId)
