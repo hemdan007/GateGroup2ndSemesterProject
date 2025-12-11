@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using gategourmetLibrary.Models;
 using gategourmetLibrary.Repo;
@@ -10,24 +11,34 @@ using Microsoft.Data.SqlClient;
 
 namespace CompanyWebpages.Pages
 {
-    // admin page that shows all orders and allows cancelling them
+    // Admin page that shows all orders and allows cancelling them.
+    // Her har admin mulighed for at filtrere på employee, department
+    // og nu også status på dagens ordrer.
     public class AdminOrderListModel : PageModel
     {
-
         // list with all orders to show in the table
         public List<Order> Orders { get; set; }
 
         // status message shown after cancel
         public string StatusMessage { get; set; }
 
-        //bind property to get emp filter from query string
+        // bind property to get emp filter from query string (employee dropdown)
         [BindProperty(SupportsGet = true)]
-        // this ? makes it optional and allows null values
-        public string? empFilter { get; set; }
+        public string empFilter { get; set; }
 
-        //dropdown list of employees
+        // dropdown list of employees
         public List<SelectListItem> Filter { get; set; }
 
+        // bind property to get department filter from query string (department dropdown)
+        [BindProperty(SupportsGet = true)]
+        public string departmentFilter { get; set; }
+
+        // dropdown list of departments
+        public List<SelectListItem> DepartmentFilter { get; set; }
+
+        // NEW: bind property to get status filter for user story "filter by status today"
+        [BindProperty(SupportsGet = true)]
+        public string statusFilter { get; set; }
 
         // service that handles order logic
         private readonly OrderService _orderService;
@@ -40,96 +51,214 @@ namespace CompanyWebpages.Pages
             _orderService = new OrderService(orderRepo);
         }
 
-        //// hj�lper method that loads only non cancelled orders
-        //private void LoadAllOrders()
-        //{
-        //    Orders = _orderService.GetAllOrders();
-        //}
-
         // runs when the page is loaded with a get method 
         public void OnGet()
         {
-            // load all orders
+            // first we load all orders from the service
             Orders = _orderService.GetAllOrders();
 
-            //initialize the filter list
+            // then we prepare both dropdowns: employees and departments
+            LoadEmployeeFilter();
+            LoadDepartmentFilter();
+
+            // afterwards we apply filters if admin has selected something
+            ApplyEmployeeFilter();
+            ApplyDepartmentFilter();
+            ApplyStatusTodayFilter();
+        }
+
+        // helper method that loads all employees into filter list
+        private void LoadEmployeeFilter()
+        {
             Filter = new List<SelectListItem>();
 
-            //get constring(DB) from connect class
             string connectionString = new Connect().cstring;
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                //open connection
                 conn.Open();
 
-                // SQL query to select orders
                 string sql = @"SELECT E_ID, E_Name FROM Employee";
 
-                //execute command
                 using (SqlCommand command = new SqlCommand(sql, conn))
-                //read data
-                using (SqlDataReader reader = command.ExecuteReader())
-
                 {
-                    //loop through the data
-                    while (reader.Read())
+                    using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        //add data to the filter list
-                        Filter.Add(new SelectListItem(
-                            // ID as value, Name as text
-                            reader["E_Name"].ToString(),
-                            reader["E_ID"].ToString()
+                        while (reader.Read())
+                        {
+                            // value = E_ID, text = E_Name
+                            SelectListItem item = new SelectListItem(
+                                reader["E_Name"].ToString(),
+                                reader["E_ID"].ToString()
+                            );
 
-                       ));
+                            Filter.Add(item);
+                        }
                     }
                 }
             }
+        }
 
-            //if admin has selected an employee, filter employee´s orders
+        // helper method that loads all departments into DepartmentFilter list
+        private void LoadDepartmentFilter()
+        {
+            DepartmentFilter = new List<SelectListItem>();
+
+            string connectionString = new Connect().cstring;
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+
+                // vi bruger D_ID og D_Name fra Department
+                string sql = @"SELECT D_ID, D_Name FROM Department ORDER BY D_Name";
+
+                using (SqlCommand command = new SqlCommand(sql, conn))
+                {
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            SelectListItem item = new SelectListItem(
+                                reader["D_Name"].ToString(),
+                                reader["D_ID"].ToString()
+                            );
+
+                            DepartmentFilter.Add(item);
+                        }
+                    }
+                }
+            }
+        }
+
+        // applies employee filter if empFilter has a value
+        private void ApplyEmployeeFilter()
+        {
             if (!string.IsNullOrEmpty(empFilter))
             {
-                //convert empFilter to int from string
-                int empId = int.Parse(empFilter);
+                string connectionString = new Connect().cstring;
 
-                //list to hold employee order IDs
+                // list to hold employee order IDs
                 List<int> empOrdersIds = new List<int>();
 
-                //get constring(DB) again from connect class 
+                // get all O_IDs for this employee from EmployeeRecipePartOrderTable
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
-                    //open connection
                     conn.Open();
 
-                    //sql: get all order IDs for the selected employee
                     string sql = @"SELECT O_ID FROM EmployeeRecipePartOrderTable WHERE E_ID = @id";
 
-                    //create sql command
                     using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        //add parameter for employee id to avoid sql injection
-                        cmd.Parameters.AddWithValue("@id", empId);
+                        cmd.Parameters.AddWithValue("@id", int.Parse(empFilter));
 
-                        //execute command and read results
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            //loop through results and add order IDs to the list
                             while (reader.Read())
                             {
-                                //add order ID to the list
-                                empOrdersIds.Add(reader.GetInt32(0));
+                                int orderId = reader.GetInt32(0);
+                                empOrdersIds.Add(orderId);
                             }
                         }
                     }
                 }
-                //filter orders to keep only those that match the employee order IDs
-                Orders = Orders
-                    .Where(o => empOrdersIds.Contains(o.ID)) // keep only matching orders
-                    .ToList(); // convert back to list
 
+                // build a new list with only the orders belonging to this employee
+                List<Order> filteredOrders = new List<Order>();
+
+                foreach (Order order in Orders)
+                {
+                    if (empOrdersIds.Contains(order.ID))
+                    {
+                        filteredOrders.Add(order);
+                    }
+                }
+
+                Orders = filteredOrders;
             }
         }
 
-        
+        // applies department filter if departmentFilter has a value
+        // så admin kan se ordrestatus for en specifik afdeling
+        private void ApplyDepartmentFilter()
+        {
+            if (!string.IsNullOrEmpty(departmentFilter))
+            {
+                string connectionString = new Connect().cstring;
+
+                // list with order IDs that belong to the selected department
+                List<int> depOrderIds = new List<int>();
+
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // Vi finder alle ordrer, som har recipe parts i et warehouse,
+                    // der er knyttet til den valgte department via WarehouseDepartment
+                    string sql =
+                        @"SELECT DISTINCT ot.O_ID
+                          FROM OrderTable ot
+                          JOIN orderTableRecipePart otr ON ot.O_ID = otr.O_ID
+                          JOIN RecipePart rp ON rp.R_ID = otr.R_ID
+                          JOIN werehouseRecipePart wrp ON wrp.R_ID = rp.R_ID
+                          JOIN warehouse w ON w.W_ID = wrp.W_ID
+                          JOIN WarehouseDepartment wd ON wd.W_ID = w.W_ID
+                          WHERE wd.D_ID = @depId";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@depId", int.Parse(departmentFilter));
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                int orderId = reader.GetInt32(0);
+                                depOrderIds.Add(orderId);
+                            }
+                        }
+                    }
+                }
+
+                // build a new list that only contains orders for this department
+                List<Order> filteredOrders = new List<Order>();
+
+                foreach (Order order in Orders)
+                {
+                    if (depOrderIds.Contains(order.ID))
+                    {
+                        filteredOrders.Add(order);
+                    }
+                }
+
+                Orders = filteredOrders;
+            }
+        }
+
+        // NEW: applies status filter only on today's orders
+        // Dette opfylder user story "filter by status på dagens ordre"
+        private void ApplyStatusTodayFilter()
+        {
+            if (!string.IsNullOrEmpty(statusFilter))
+            {
+                List<Order> filteredOrders = new List<Order>();
+
+                DateTime today = DateTime.Today;
+
+                foreach (Order order in Orders)
+                {
+                    string currentStatus = order.Status.ToString();
+
+                    // vi viser kun ordrer, hvor status matcher og datoen for OrderDoneBy er i dag
+                    if (currentStatus == statusFilter && order.OrderDoneBy.Date == today)
+                    {
+                        filteredOrders.Add(order);
+                    }
+                }
+
+                Orders = filteredOrders;
+            }
+        }
 
         // runs when the cancel form is posted
         public IActionResult OnPostCancel(int orderId)
@@ -140,7 +269,7 @@ namespace CompanyWebpages.Pages
             // set status message so admin can see what happened
             StatusMessage = "Ordre #" + orderId + " er blevet annulleret.";
 
-            // after a POST we redirect to GET so the page reloads clean
+            // after a post we redirect to get so the page reloads clean
             return RedirectToPage();
         }
     }
