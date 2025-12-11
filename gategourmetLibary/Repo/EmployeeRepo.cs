@@ -1,6 +1,7 @@
 ﻿using gategourmetLibrary.Repo;
 using gategourmetLibrary.Secret;
 using Microsoft.Data.SqlClient;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -321,6 +322,88 @@ namespace gategourmetLibrary.Models
             }
 
             return databasePostions;
+        }
+
+        public Dictionary<int,Employee> GetEmployeeFromOrderID(int orderid)
+        {
+            Dictionary<int, Employee> databaseemployees = new Dictionary<int, Employee>();
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                SqlCommand command = new SqlCommand("select Employee.E_Name as employeeName, " +
+                 "Employee.E_ID as employeeId, Employee.E_Email as employeeEmail, Employee.E_Password as employeePassword" +
+                 ", Phone.P_number as phoneNumber, Phone.P_ID as phoneid, " +
+                 "EmployeeRecipePartOrderTable.R_ID as rid" +
+                 " from Employee " +
+                 " join employeePhone on Employee.E_ID = employeePhone.E_ID" +
+                 " join Phone on employeePhone.P_ID = Phone.P_ID " +
+                 " join EmployeeRecipePartOrderTable on EmployeeRecipePartOrderTable.E_ID = Employee.E_ID " +
+                 "where EmployeeRecipePartOrderTable.O_ID = @id", connection);
+
+
+                command.Parameters.AddWithValue("@id", orderid);
+                //åben forbindelse
+                connection.Open();
+                // udføre kommando (henter alle medarbejdere) 
+                SqlDataReader reader = command.ExecuteReader();
+
+                try
+                {
+                   
+
+
+                    // loop sikre at vi læser hver eneste medarbejder i databasen.
+                    while (reader.Read())
+                    {
+                        int recipeID = Convert.ToInt32(reader["rid"]);
+                        //opret et nyt objekt for hvert medarbejder
+                        Employee employee = new Employee()
+                        {
+                            // henter data fra databasen og sætter det på Employee objektet 
+                            Id = Convert.ToInt32(reader["employeeId"]),
+                            Name = reader["employeeName"].ToString(),
+                            Email = reader["employeeEmail"].ToString(),
+                            Password = reader["employeePassword"].ToString()
+                        };
+                        if (!databaseemployees.ContainsKey(recipeID))
+                        {
+                            //tilføje medarbejder til listen 
+                            databaseemployees.Add(recipeID, employee);
+                        }
+
+
+
+                        int phone = (int)reader["phoneid"];
+                        if (phone % 2 == 0)
+                        {
+                            databaseemployees[recipeID].WorkPhoneNumber = reader["phoneNumber"].ToString();
+                        }
+                        else if (phone % 2 != 0)
+                        {
+                            databaseemployees[recipeID].PersonalPhoneNumber = reader["phoneNumber"].ToString();
+                        }
+
+                    }
+                }
+                catch (SqlException sqlError)
+                {
+                    throw new Exception("Database error in EployeeeRepository.GetEmployeeFromOrderID(int orderid): " + sqlError.Message);
+
+                }
+                finally
+                {
+                    //luk reader  
+                    reader.Close();
+
+                    //luk forbindelse 
+                    connection.Close();
+
+                   
+                }
+                //returnere liste med alle medarbejder 
+                return databaseemployees;
+
+            }
+
         }
     }
 }

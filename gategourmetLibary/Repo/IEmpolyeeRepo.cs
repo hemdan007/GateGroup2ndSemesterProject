@@ -17,5 +17,6 @@ namespace gategourmetLibrary.Repo
         List<Employee> Filter(string empolyee);
 
         Dictionary<int, string> GetAllPostions();
+        Dictionary<int, Employee> GetEmployeeFromOrderID(int orderid);
     }
 }

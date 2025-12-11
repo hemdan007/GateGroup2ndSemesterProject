@@ -71,5 +71,9 @@ namespace gategourmetLibrary.Service
         {
             return _iemployee.GetAllPostions();
         }
+        public Dictionary<int, Employee> GetEmployeeFromOrderID(int orderid)
+        {
+            return _iemployee.GetEmployeeFromOrderID(orderid);
+        }
     }
 }

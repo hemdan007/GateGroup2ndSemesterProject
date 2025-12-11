@@ -1,0 +1,51 @@
+﻿@page
+@model CompanyWebpages.Pages.ResponsibleModel
+@{
+}
+
+
+<div class="neworder-container container-sm my-4">
+    <div class="text-center mb-4">
+        <h2 class="mb-1">@Model.CustomersOrder.Name 's order with order id:@Model.Order.ID</h2>
+       
+    </div>
+@if (Model.Employees.Count == 0)
+    {
+        <div class="alert alert-info">
+            their are no employees that are working on this order currtnely
+        </div>
+    }
+    else
+    {
+        <div class="row">
+
+
+@foreach(KeyValuePair<int,Employee> keyValue in Model.Employees)
+{
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">@Model.Order.Recipe[keyValue.Key].partName</h5>
+                <h6 class="card-subtitle mb-2 text-muted">ID: @keyValue.Key</h6>
+
+                <div class="mb-3">
+                    <p class="card-text">
+                        <strong>employee id:</strong> @keyValue.Value.Id<br>
+                        <strong>employee name:</strong> @keyValue.Value.Name<br>
+                            <strong>Recipe part status:</strong> @Model.Order.Recipe[keyValue.Key].status<br>
+                            <strong>Recipe part stroage location is :</strong> @Model.Order.Recipe[keyValue.Key].StoredLocation<br>
+
+                    </p>
+                </div>
+
+                
+
+                   
+            </div>
+        </div>
+    </div>
+   
+}
+</div>
+    }
+</div>

@@ -19,20 +19,22 @@ namespace gategourmetLibrary.Models
         // NEW: Track individual items
         public List<OrderItem> Items { get; set; }
 
-        public Order(DateTime made, DateTime ready, int id, bool pstatus)
+        public Order(DateTime made, DateTime ready, int id, bool pstatus):this()
         {
             OrderMade = made;
             OrderDoneBy = ready;
             ID = id;
             paystatus = pstatus;
-            Items = new List<OrderItem>();
         }
 
-        public Order(DateTime made, DateTime ready, Customer customer, int id, bool pstatus, Dictionary<int, RecipePart> recipe)
-            : this(made, ready, id, pstatus)
+        public Order(DateTime made, DateTime ready, Customer customer, int id, bool pstatus, Dictionary<int, RecipePart> recipe): this(made, ready, id, pstatus)
         {
             CustomerOrder = customer;
             Recipe = recipe;
+        }
+        public Order(DateTime made, DateTime ready, int id, bool pstatus,OrderStatus status):this( made,  ready,  id,  pstatus)
+        {
+            Status = status;
         }
 
         public Order()

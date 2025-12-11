@@ -1,8 +1,11 @@
-﻿using gategourmetLibrary.Models;
+﻿using gategourmetLibary.Models;
+using gategourmetLibrary.Models;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 
 namespace gategourmetLibrary.Repo
 {
@@ -284,14 +287,19 @@ namespace gategourmetLibrary.Repo
         public Order Get(int orderID)
         {
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
-            Order order = null;
+            Order order = new Order();
 
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID, O_Made, O_Ready, O_PaySatus, O_Status " +
-                "FROM OrderTable WHERE O_ID = @O_ID",
+                "SELECT OrderTable.O_ID as orderID, OrderTable.O_Made as made, OrderTable.O_Ready as ready," +
+                " OrderTable.O_PaySatus as paysatus, OrderTable.O_Status as orderstatus, " +
+                "RP.R_ID as rid, RP.R_Name as rname, RP.R_HowToPrep as howtoprep,RP.R_Status as rstatus" +
+                " FROM OrderTable" +
+                " left join orderTableRecipePart OTP on OTP.O_ID = OrderTable.o_ID " +
+                "JOIN RecipePart RP ON OTP.R_ID = RP.R_ID " +
+                "WHERE OrderTable.O_ID = @id",
                 sqlConnection);
 
-            sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
+            sqlCommand.Parameters.AddWithValue("@id", orderID);
 
             try
             {
@@ -300,20 +308,47 @@ namespace gategourmetLibrary.Repo
 
                 if (sqlReader.Read())
                 {
-                    int id = Convert.ToInt32(sqlReader["O_ID"]);
-                    DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
-                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
-                    string statusString = sqlReader["O_Status"].ToString();
+                    int id = Convert.ToInt32(sqlReader["orderID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["paysatus"]);
+                    string statusString = sqlReader["orderstatus"].ToString();
 
                     OrderStatus status;
                     if (!Enum.TryParse<OrderStatus>(statusString, out status))
                     {
                         status = OrderStatus.Created;
                     }
+                        int rID = Convert.ToInt32(sqlReader["rid"]);
+                        string rName =  sqlReader["rname"].ToString();
+                        string howtoprep = sqlReader["howtoprep"].ToString();
+                        string rStatus = sqlReader["rstatus"].ToString();
 
-                    order = new Order(made, ready, id, paystatus);
-                    order.Status = status;
+
+
+
+                    if (order.ID != id)
+                    {
+                        order = new Order(made, ready, id, paystatus, status);
+
+                        order.Recipe.Add(rID, new RecipePart
+                        {
+                            ID = rID,
+                            partName = rName,
+                            Assemble = howtoprep,
+                            status = rStatus
+                        });
+                    }
+                    else
+                    {
+                        order.Recipe.Add(rID, new RecipePart
+                        {
+                            ID = rID,
+                            partName = rName,
+                            Assemble = howtoprep,
+                            status = rStatus
+                        });
+                    }
                 }
             }
             catch (SqlException sqlError)
