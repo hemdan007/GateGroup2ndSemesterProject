@@ -1,9 +1,10 @@
-﻿using System;
+﻿using gategourmetLibary.Models;
+using gategourmetLibrary.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using gategourmetLibrary.Models;
 
 namespace gategourmetLibrary.Repo
 {
@@ -17,5 +18,8 @@ namespace gategourmetLibrary.Repo
         List<Employee> Filter(string empolyee);
 
         Dictionary<int, string> GetAllPostions();
+        Dictionary<int, Employee> GetEmployeeFromOrderID(int orderid);
+        bool IsThisAnAdmin(int employeeID);
+        manger GetManger(int id);
     }
 }

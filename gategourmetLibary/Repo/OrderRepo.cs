@@ -1,8 +1,11 @@
-﻿using gategourmetLibrary.Models;
+﻿using gategourmetLibary.Models;
+using gategourmetLibrary.Models;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 
 namespace gategourmetLibrary.Repo
 {
@@ -27,7 +30,11 @@ namespace gategourmetLibrary.Repo
 
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID, O_Made, O_Ready, O_PaySatus, O_Status FROM OrderTable",
+                "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status, " +
+                "c.C_ID, c.C_Name, c.C_CompanyName " +
+                "FROM OrderTable o " +
+                "LEFT JOIN OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                "LEFT JOIN Customer c ON oc.C_ID = c.C_ID",
                 sqlConnection);
 
             try
@@ -57,6 +64,29 @@ namespace gategourmetLibrary.Repo
                     // create order object
                     Order order = new Order(made, ready, id, paystatus);
                     order.Status = status;
+
+                    // load customer information if available
+                    if (sqlReader["C_ID"] != DBNull.Value)
+                    {
+                        order.CustomerOrder = new Customer
+                        {
+                            ID = Convert.ToInt32(sqlReader["C_ID"]),
+                            Name = sqlReader["C_Name"].ToString()
+                        };
+                        
+                        // Try to read CompanyName if available
+                        try
+                        {
+                            if (sqlReader["C_CompanyName"] != DBNull.Value)
+                            {
+                                order.CustomerOrder.CompanyName = sqlReader["C_CompanyName"].ToString();
+                            }
+                        }
+                        catch
+                        {
+                            // Column doesn't exist, leave CompanyName as null
+                        }
+                    }
 
                     ordersFromDatabase.Add(id, order);
                 }
@@ -284,14 +314,19 @@ namespace gategourmetLibrary.Repo
         public Order Get(int orderID)
         {
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
-            Order order = null;
+            Order order = new Order();
 
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID, O_Made, O_Ready, O_PaySatus, O_Status " +
-                "FROM OrderTable WHERE O_ID = @O_ID",
+                "SELECT OrderTable.O_ID as orderID, OrderTable.O_Made as made, OrderTable.O_Ready as ready," +
+                " OrderTable.O_PaySatus as paysatus, OrderTable.O_Status as orderstatus, " +
+                "RP.R_ID as rid, RP.R_Name as rname, RP.R_HowToPrep as howtoprep,RP.R_Status as rstatus" +
+                " FROM OrderTable" +
+                " left join orderTableRecipePart OTP on OTP.O_ID = OrderTable.o_ID " +
+                "JOIN RecipePart RP ON OTP.R_ID = RP.R_ID " +
+                "WHERE OrderTable.O_ID = @id",
                 sqlConnection);
 
-            sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
+            sqlCommand.Parameters.AddWithValue("@id", orderID);
 
             try
             {
@@ -300,20 +335,47 @@ namespace gategourmetLibrary.Repo
 
                 if (sqlReader.Read())
                 {
-                    int id = Convert.ToInt32(sqlReader["O_ID"]);
-                    DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
-                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
-                    string statusString = sqlReader["O_Status"].ToString();
+                    int id = Convert.ToInt32(sqlReader["orderID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["paysatus"]);
+                    string statusString = sqlReader["orderstatus"].ToString();
 
                     OrderStatus status;
                     if (!Enum.TryParse<OrderStatus>(statusString, out status))
                     {
                         status = OrderStatus.Created;
                     }
+                        int rID = Convert.ToInt32(sqlReader["rid"]);
+                        string rName =  sqlReader["rname"].ToString();
+                        string howtoprep = sqlReader["howtoprep"].ToString();
+                        string rStatus = sqlReader["rstatus"].ToString();
 
-                    order = new Order(made, ready, id, paystatus);
-                    order.Status = status;
+
+
+
+                    if (order.ID != id)
+                    {
+                        order = new Order(made, ready, id, paystatus, status);
+
+                        order.Recipe.Add(rID, new RecipePart
+                        {
+                            ID = rID,
+                            partName = rName,
+                            Assemble = howtoprep,
+                            status = rStatus
+                        });
+                    }
+                    else
+                    {
+                        order.Recipe.Add(rID, new RecipePart
+                        {
+                            ID = rID,
+                            partName = rName,
+                            Assemble = howtoprep,
+                            status = rStatus
+                        });
+                    }
                 }
             }
             catch (SqlException sqlError)
@@ -419,7 +481,51 @@ namespace gategourmetLibrary.Repo
         //filters orders for a specific customer/company
         public List<Order> FilterByCompany(Customer customer)
         {
-            return null;
+            if (customer == null || customer.ID == 0)
+            {
+                return new List<Order>();
+            }
+
+            List<Order> orders = new List<Order>();
+
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                // sql command to select orders for the customer
+                SqlCommand command = new SqlCommand(
+                    "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status " +
+                    "FROM dbo.OrderTable o " +
+                    "INNER JOIN dbo.OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                    "WHERE oc.C_ID = @CustomerId",
+                    connection);
+
+                command.Parameters.AddWithValue("@CustomerId", customer.ID);
+
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    int id = Convert.ToInt32(reader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(reader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(reader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(reader["O_PaySatus"]);
+                    string statusString = reader["O_Status"].ToString();
+
+                    OrderStatus status;
+                    if (!Enum.TryParse<OrderStatus>(statusString, out status))
+                    {
+                        status = OrderStatus.Created;
+                    }
+
+                    Order order = new Order(made, ready, id, paystatus);
+                    order.Status = status;
+                    order.CustomerOrder = customer;
+
+                    orders.Add(order);
+                }
+            }
+
+            return orders;
         }
 
         //filters orders by their status

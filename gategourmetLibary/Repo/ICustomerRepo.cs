@@ -24,7 +24,7 @@ namespace gategourmetLibrary.Repo
         List<Order> GetCustomerOrders(int customerId);
         //filters customers by name
         List<Customer> FilterCustomersByName(string name);
-
+        Customer GetCustomerByOrder(int orderid);
 
         //void Add(int customer);
         //int Get();
