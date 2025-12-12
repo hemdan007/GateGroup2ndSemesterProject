@@ -2,6 +2,7 @@
 using gategourmetLibrary.Repo;
 using gategourmetLibrary.Secret;
 using Microsoft.Data.SqlClient;
+using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -322,6 +323,186 @@ namespace gategourmetLibrary.Models
             }
 
             return databasePostions;
+        }
+
+        public Dictionary<int,Employee> GetEmployeeFromOrderID(int orderid)
+        {
+            Dictionary<int, Employee> databaseemployees = new Dictionary<int, Employee>();
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                SqlCommand command = new SqlCommand("select Employee.E_Name as employeeName, " +
+                 "Employee.E_ID as employeeId, Employee.E_Email as employeeEmail, Employee.E_Password as employeePassword" +
+                 ", Phone.P_number as phoneNumber, Phone.P_ID as phoneid, " +
+                 "EmployeeRecipePartOrderTable.R_ID as rid" +
+                 " from Employee " +
+                 " join employeePhone on Employee.E_ID = employeePhone.E_ID" +
+                 " join Phone on employeePhone.P_ID = Phone.P_ID " +
+                 " join EmployeeRecipePartOrderTable on EmployeeRecipePartOrderTable.E_ID = Employee.E_ID " +
+                 "where EmployeeRecipePartOrderTable.O_ID = @id", connection);
+
+
+                command.Parameters.AddWithValue("@id", orderid);
+                //åben forbindelse
+                connection.Open();
+                // udføre kommando (henter alle medarbejdere) 
+                SqlDataReader reader = command.ExecuteReader();
+
+                try
+                {
+                   
+
+
+                    // loop sikre at vi læser hver eneste medarbejder i databasen.
+                    while (reader.Read())
+                    {
+                        int recipeID = Convert.ToInt32(reader["rid"]);
+                        //opret et nyt objekt for hvert medarbejder
+                        Employee employee = new Employee()
+                        {
+                            // henter data fra databasen og sætter det på Employee objektet 
+                            Id = Convert.ToInt32(reader["employeeId"]),
+                            Name = reader["employeeName"].ToString(),
+                            Email = reader["employeeEmail"].ToString(),
+                            Password = reader["employeePassword"].ToString()
+                        };
+                        if (!databaseemployees.ContainsKey(recipeID))
+                        {
+                            //tilføje medarbejder til listen 
+                            databaseemployees.Add(recipeID, employee);
+                        }
+
+
+
+                        int phone = (int)reader["phoneid"];
+                        if (phone % 2 == 0)
+                        {
+                            databaseemployees[recipeID].WorkPhoneNumber = reader["phoneNumber"].ToString();
+                        }
+                        else if (phone % 2 != 0)
+                        {
+                            databaseemployees[recipeID].PersonalPhoneNumber = reader["phoneNumber"].ToString();
+                        }
+
+                    }
+                }
+                catch (SqlException sqlError)
+                {
+                    throw new Exception("Database error in EployeeeRepository.GetEmployeeFromOrderID(int orderid): " + sqlError.Message);
+
+                }
+                finally
+                {
+                    //luk reader  
+                    reader.Close();
+
+                    //luk forbindelse 
+                    connection.Close();
+
+                   
+                }
+                //returnere liste med alle medarbejder 
+                return databaseemployees;
+
+            }
+            
+
+        }
+        public bool IsThisAnAdmin(int employeeID)
+        {
+            Position positionCheck = null;
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand("select Pos_ID from EmployeePostion" +
+                " where EmployeePostion.E_ID =@id"
+                , sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@id", employeeID);
+
+
+            try
+            {
+
+
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+
+                while (sqlReader.Read())
+                {
+                    positionCheck = new Position
+                    {
+                        Id = Convert.ToInt32(sqlReader["Pos_ID"])
+                    };
+                }
+
+                sqlReader.Close();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in EmployeeRepo.IsThisAnAdmin(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            if(positionCheck != null)
+            {
+                return true;
+
+            }
+            else
+            {
+                return false;           
+            }
+        }
+        public manger GetManger(int id)
+        {
+
+            SqlConnection connection = new SqlConnection(_connectionString);
+
+            // SQL kommando: Find medarbejder med dette ID
+               SqlCommand command = new SqlCommand("select Employee.E_Name as employeeName, Employee.E_ID as employeeId,Employee.E_Email as employeeEmail," +
+                " Employee.E_Password as employeePassword" +
+                ",Postion.Pos_ID as postionid, Postion.Pos_Name as posname from Employee" +
+                " join EmployeePostion on EmployeePostion.E_ID = Employee.E_ID" +
+                "  join Postion on Postion.Pos_ID = EmployeePostion.Pos_ID " +
+                " where  Employee.E_ID = @id", connection);
+            // her sætte vi ID parameter
+            command.Parameters.AddWithValue("@id", id);
+
+            // vi åbner forbindelsen til databasen 
+            connection.Open();
+
+            //sql commando til finde resultat
+            SqlDataReader reader = command.ExecuteReader();
+
+            //hvis der findes en medarbejder med dette ID
+            if (reader.Read())
+            {
+                // hvis medarbejdern blev fundet, bliver der oprettet en ny objekt med data fra databasen
+                manger admin = new manger()
+                {
+                    Id = (int)reader["employeeId"],
+                    Name = reader["employeeName"].ToString(),
+                    Email = reader["employeeEmail"].ToString(),
+                    Password = reader["employeePassword"].ToString()
+                };
+                admin.position.Id = (int)reader["postionid"];
+                admin.position.Name = reader["posname"].ToString();
+
+
+                // lukker for reader og returner medarbejderen 
+                reader.Close();
+                return admin;
+
+
+            }
+            else // hvis der ikke findes en medarbejder med det ID
+            {
+                // luk for reader og returner null
+                reader.Close();
+                return null;
+            }
+        }
 
 
             

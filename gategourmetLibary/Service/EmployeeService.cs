@@ -72,6 +72,32 @@ namespace gategourmetLibrary.Service
         {
             return _iemployee.GetAllPostions();
         }
+        public Dictionary<int, Employee> GetEmployeeFromOrderID(int orderid)
+        {
+            return _iemployee.GetEmployeeFromOrderID(orderid);
+        }
+        public bool LoginAdmin(int employeeId,string password)
+        {
+            if(_iemployee.IsThisAnAdmin(employeeId) == true)
+            {
+                manger loginAttempt = _iemployee.GetManger(employeeId);
+                
+                if(loginAttempt.Password == password)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+
+        }
 
         public void AddNewAdmin(Admin admin)
         {

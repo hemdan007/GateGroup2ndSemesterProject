@@ -53,5 +53,9 @@ namespace gategourmetLibrary.Service
         {
             return _customerRepo.FilterCustomersByName(name);
         }
+        public Customer GetCustomerByOrder(int orderid)
+        {
+            return _customerRepo.GetCustomerByOrder(orderid);
+        }
     }
 }

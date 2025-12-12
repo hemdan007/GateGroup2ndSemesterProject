@@ -1,11 +1,117 @@
-@page
+﻿@page
 @model CompanyWebpages.Pages.AdminOrderListModel
+@using gategourmetLibrary.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
+
 @{
-    ViewData["Title"] = "Order Oversigt";
+    ViewData["Title"] = "Ordre Oversigt";
 }
 
 <div class="container mt-4 text-light">
     <h2 class="mb-3">Ordre Oversigt</h2>
+
+    @* filter by employee *@
+    <form method="get" class="mb-3 d-flex align-items-center gap-2">
+        <label for="empFilter" class="form-label mb-0 text-light">Filter by employee:</label>
+
+        <select id="empFilter"
+                name="empFilter"
+                class="form-select form-select-sm w-auto"
+                onchange="this.form.submit()">
+            <option value="">-- Choose an employee --</option>
+            @foreach (SelectListItem emp in Model.Filter)
+            {
+                <option value="@emp.Value"
+                        selected="@(Model.empFilter == emp.Value)">
+                    @emp.Text
+                </option>
+            }
+        </select>
+
+        <label for="FromDate" class="form-label mb-0 text-light">
+			From:
+        </label>
+        <input type="date"
+               id="FromDate"
+               name="FromDate"
+               class="form-control form-control-sm w-auto"
+               value="@(Model.FromDate?.ToString("yyyy-MM-dd"))"
+			   onchange="this.form.submit()" />
+
+		<label for="ToDate" class="form-label mb-0 text-light">
+			To:
+		</label>
+        <input type="date"
+               id="ToDate"
+               name="ToDate"
+               class="form-control form-control-sm w-auto"
+			   value="@(Model.ToDate?.ToString("yyyy-MM-dd"))"
+			   onchange="this.form.submit()" />
+
+
+        @if (!string.IsNullOrEmpty(Model.empFilter))
+        {
+            <span class="text-info ms-2">
+                Show orders assigned to employee ID: @Model.empFilter
+            </span>
+        }
+    </form>
+
+    @* filter by department *@
+    <form method="get" class="mb-3 d-flex align-items-center gap-2">
+        <label for="depFilter" class="form-label mb-0 text-light">Filter by department:</label>
+
+        <select id="depFilter"
+                name="departmentFilter"
+                class="form-select form-select-sm w-auto"
+                onchange="this.form.submit()">
+            <option value="">-- Choose a department --</option>
+            @foreach (SelectListItem dep in Model.DepartmentFilter)
+            {
+                <option value="@dep.Value"
+                        selected="@(Model.departmentFilter == dep.Value)">
+                    @dep.Text
+                </option>
+            }
+        </select>
+
+        @if (!string.IsNullOrEmpty(Model.departmentFilter))
+        {
+            <span class="text-info ms-2">
+                Showing orders for department ID: @Model.departmentFilter
+            </span>
+        }
+    </form>
+
+    @* filter by status on today's orders *@
+    <form method="get" class="mb-4 d-flex align-items-center gap-2">
+        <label for="statusFilter" class="form-label mb-0 text-light">Filter today's orders by status:</label>
+
+        <select id="statusFilter"
+                name="statusFilter"
+                class="form-select form-select-sm w-auto"
+                onchange="this.form.submit()">
+            <option value="">-- All statuses today --</option>
+
+            @{
+                string[] allStatuses = new string[] { "Created", "InProgress", "Completed", "Cancelled" };
+
+                foreach (string status in allStatuses)
+                {
+                    bool isSelected = Model.statusFilter == status;
+                    string selectedText = isSelected ? "selected=\"selected\"" : "";
+                    @:<option value="@status" @Html.Raw(selectedText)>@status</option>
+                }
+            }
+        </select>
+
+        @if (!string.IsNullOrEmpty(Model.statusFilter))
+        {
+            <span class="text-info ms-2">
+                Showing @Model.statusFilter orders for today.
+            </span>
+        }
+    </form>
 
     @if (!string.IsNullOrEmpty(Model.StatusMessage))
     {
@@ -27,6 +133,7 @@
                 <thead class="table-light text-dark">
                     <tr>
                         <th>Ordre ID</th>
+                        <th>Firma</th>
                         <th>Oprettet</th>
                         <th>Færdig senest</th>
                         <th>Status</th>
@@ -35,10 +142,31 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (gategourmetLibrary.Models.Order order in Model.Orders)
+                    @foreach (Order order in Model.Orders)
                     {
                         <tr>
                             <td><strong>@order.ID</strong></td>
+                            <td>
+                                @if (order.CustomerOrder != null)
+                                {
+                                    @if (!string.IsNullOrEmpty(order.CustomerOrder.CompanyName))
+                                    {
+                                        <strong>@order.CustomerOrder.CompanyName</strong>
+                                        @if (!string.IsNullOrEmpty(order.CustomerOrder.Name) && order.CustomerOrder.Name != order.CustomerOrder.CompanyName)
+                                        {
+                                            <br /><small class="text-muted">@order.CustomerOrder.Name</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @order.CustomerOrder.Name
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
                             <td>@order.OrderMade.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>@order.OrderDoneBy.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>
@@ -63,7 +191,7 @@
                                               role="status"></span>
                                         <i class="bi bi-search"></i> Spor ordre
                                     </a>
-                                    @if (order.Status != gategourmetLibrary.Models.OrderStatus.Cancelled)
+                                    @if (order.Status != OrderStatus.Cancelled)
                                     {
                                         <form method="post" asp-page-handler="Cancel" class="d-inline" id="cancelForm_@order.ID">
                                             <input type="hidden" name="orderId" value="@order.ID" />
@@ -77,6 +205,13 @@
                                         <span class="text-muted">Allerede annulleret</span>
                                     }
                                 </div>
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-info"
+                                   asp-page="/Responsible"
+                                   asp-route-orderid="@order.ID">
+                                    view employees who are Responsible for this order
+                                </a>
                             </td>
                         </tr>
                     }
