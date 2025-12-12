@@ -269,5 +269,61 @@ namespace gategourmetLibrary.Repo
             // return the list of filtered customers
             return customers;
         }
+
+        public Customer GetCustomerByOrder(int orderid)
+        {
+            Dictionary<int, Employee> databaseemployees = new Dictionary<int, Employee>();
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+
+                Customer databasecustomer = new Customer();
+                SqlCommand command = new SqlCommand("select Customer.C_ID as CID,Customer.C_Name as CName from Customer " +
+                    "  join OrderTableCustomer on OrderTableCustomer.C_ID = customer.C_ID " +
+                 "where OrderTableCustomer.O_ID = @id", connection);
+
+              
+
+                command.Parameters.AddWithValue("@id", orderid);
+                //åben forbindelse
+                connection.Open();
+                // udføre kommando (henter customer ) 
+                SqlDataReader reader = command.ExecuteReader();
+
+                try
+                {
+                    
+
+
+                    while (reader.Read())
+                    {
+                        Debug.WriteLine($"id from reader is {(int)reader["CID"]}");
+                        databasecustomer.ID = (int)reader["CID"];
+                        databasecustomer.Name = reader["CName"].ToString();
+
+                    }
+                }
+                catch (SqlException sqlError)
+                {
+                    throw new Exception("Database error in CustomerRepository.GetCustomerByOrder(int orderid): " + sqlError.Message);
+
+                }
+                finally
+                {
+                    //luk reader  
+                    reader.Close();
+
+                    //luk forbindelse 
+                    connection.Close();
+
+                   
+                }
+
+                Debug.WriteLine($"customer id from ordertablecustomerid is {databasecustomer.ID}");
+                //returnere customer
+                return databasecustomer;
+
+            }
+        }
+
     }
 }
