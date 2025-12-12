@@ -271,7 +271,7 @@ namespace CompanyWebpages.Pages
 
         }
 
-        // NEW: applies status filter only on today's orders
+        // applies status filter only on today's orders
         // Dette opfylder user story "filter by status på dagens ordre"
         private void ApplyStatusTodayFilter()
         {
