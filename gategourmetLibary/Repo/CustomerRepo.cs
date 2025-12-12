@@ -43,12 +43,27 @@ namespace gategourmetLibrary.Repo
                 // loop through each returned row
                 while (reader.Read())
                 {
-                    customers.Add(new Customer
+                    var customer = new Customer
                     {
                         ID = (int)reader["C_ID"],
                         Name = reader["C_Name"].ToString(),
                         Password = reader["C_Password"].ToString()
-                    });
+                    };
+                    
+                    // Try to read CompanyName if the column exists
+                    try
+                    {
+                        if (reader["C_CompanyName"] != DBNull.Value)
+                        {
+                            customer.CompanyName = reader["C_CompanyName"].ToString();
+                        }
+                    }
+                    catch
+                    {
+                        // Column doesn't exist, leave CompanyName as null
+                    }
+                    
+                    customers.Add(customer);
                 }
             }
 

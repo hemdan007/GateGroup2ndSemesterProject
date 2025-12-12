@@ -1,42 +1,49 @@
-@page
+﻿@page
 @model CompanyWebpages.Pages.AdminOrderListModel
-@using gategourmetLibrary.Models
-
-
+@using System.Linq
 @{
-    ViewData["Title"] = "Order Oversigt";
+    ViewData["Title"] = "Ordre Oversigt";
 }
 
 <div class="container mt-4 text-light">
     <h2 class="mb-3">Ordre Oversigt</h2>
 
-@*     employee filter
- *@
- <form method="get" class="mb-4 d-flex align-items-center gap-2">
-        <label for="empFilter" class="form-label mb-0 text-light">Filter by employee:
-        </label>
-        <select 
-                id="empFilter"
-				name="empFilter"
-                class="form-select form-select-sm w-auto"
-                onchange="this.form.submit()">
-			<option value="">-- Choose an employee --</option>
-            @foreach (var emp in Model.Filter)
-            {
-                <option value="@emp.Value"
-                selected="@(Model.empFilter == emp.Value)">@emp.Text</option>
-			}
-		</select>   
+    <!-- Filter form -->
+    <div class="card mb-4 bg-dark border-light">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="selectedCustomerId" class="form-label">Filtrer efter firma:</label>
+                    <select class="form-select" id="selectedCustomerId" name="selectedCustomerId" onchange="this.form.submit()">
+                        <option value="">Alle firmaer</option>
+                        @if (Model.Customers != null)
+                        {
+                            @foreach (var customer in Model.Customers)
+                            {
+                                <option value="@customer.ID" selected="@(Model.SelectedCustomerId == customer.ID)">
+                                    @(string.IsNullOrEmpty(customer.CompanyName) ? customer.Name : customer.CompanyName)
+                                    @if (!string.IsNullOrEmpty(customer.CompanyName) && customer.Name != customer.CompanyName)
+                                    {
+                                        <text> (@customer.Name)</text>
+                                    }
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <a href="/AdminOrderList" class="btn btn-secondary">Nulstil filter</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        @if (!string.IsNullOrEmpty(Model.empFilter))
-        {
-            <span class="text-info ms-2">
-				Show orders assigned to ID: @Model.empFilter
-			</span>
-        }
-        </form>
-        
-
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger text-dark">
+            <strong>Fejl:</strong> @Model.ErrorMessage
+        </div>
+    }
 
     @if (!string.IsNullOrEmpty(Model.StatusMessage))
     {
@@ -58,6 +65,7 @@
                 <thead class="table-light text-dark">
                     <tr>
                         <th>Ordre ID</th>
+                        <th>Firma</th>
                         <th>Oprettet</th>
                         <th>Færdig senest</th>
                         <th>Status</th>
@@ -70,6 +78,27 @@
                     {
                         <tr>
                             <td><strong>@order.ID</strong></td>
+                            <td>
+                                @if (order.CustomerOrder != null)
+                                {
+                                    @if (!string.IsNullOrEmpty(order.CustomerOrder.CompanyName))
+                                    {
+                                        <strong>@order.CustomerOrder.CompanyName</strong>
+                                        @if (!string.IsNullOrEmpty(order.CustomerOrder.Name) && order.CustomerOrder.Name != order.CustomerOrder.CompanyName)
+                                        {
+                                            <br /><small class="text-muted">@order.CustomerOrder.Name</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @order.CustomerOrder.Name
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
                             <td>@order.OrderMade.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>@order.OrderDoneBy.ToString("yyyy-MM-dd HH:mm")</td>
                             <td>

@@ -27,7 +27,11 @@ namespace gategourmetLibrary.Repo
 
             SqlConnection sqlConnection = new SqlConnection(_connectionString);
             SqlCommand sqlCommand = new SqlCommand(
-                "SELECT O_ID, O_Made, O_Ready, O_PaySatus, O_Status FROM OrderTable",
+                "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status, " +
+                "c.C_ID, c.C_Name, c.C_CompanyName " +
+                "FROM OrderTable o " +
+                "LEFT JOIN OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                "LEFT JOIN Customer c ON oc.C_ID = c.C_ID",
                 sqlConnection);
 
             try
@@ -57,6 +61,29 @@ namespace gategourmetLibrary.Repo
                     // create order object
                     Order order = new Order(made, ready, id, paystatus);
                     order.Status = status;
+
+                    // load customer information if available
+                    if (sqlReader["C_ID"] != DBNull.Value)
+                    {
+                        order.CustomerOrder = new Customer
+                        {
+                            ID = Convert.ToInt32(sqlReader["C_ID"]),
+                            Name = sqlReader["C_Name"].ToString()
+                        };
+                        
+                        // Try to read CompanyName if available
+                        try
+                        {
+                            if (sqlReader["C_CompanyName"] != DBNull.Value)
+                            {
+                                order.CustomerOrder.CompanyName = sqlReader["C_CompanyName"].ToString();
+                            }
+                        }
+                        catch
+                        {
+                            // Column doesn't exist, leave CompanyName as null
+                        }
+                    }
 
                     ordersFromDatabase.Add(id, order);
                 }
@@ -419,7 +446,51 @@ namespace gategourmetLibrary.Repo
         //filters orders for a specific customer/company
         public List<Order> FilterByCompany(Customer customer)
         {
-            return null;
+            if (customer == null || customer.ID == 0)
+            {
+                return new List<Order>();
+            }
+
+            List<Order> orders = new List<Order>();
+
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                // sql command to select orders for the customer
+                SqlCommand command = new SqlCommand(
+                    "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status " +
+                    "FROM dbo.OrderTable o " +
+                    "INNER JOIN dbo.OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                    "WHERE oc.C_ID = @CustomerId",
+                    connection);
+
+                command.Parameters.AddWithValue("@CustomerId", customer.ID);
+
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    int id = Convert.ToInt32(reader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(reader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(reader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(reader["O_PaySatus"]);
+                    string statusString = reader["O_Status"].ToString();
+
+                    OrderStatus status;
+                    if (!Enum.TryParse<OrderStatus>(statusString, out status))
+                    {
+                        status = OrderStatus.Created;
+                    }
+
+                    Order order = new Order(made, ready, id, paystatus);
+                    order.Status = status;
+                    order.CustomerOrder = customer;
+
+                    orders.Add(order);
+                }
+            }
+
+            return orders;
         }
 
         //filters orders by their status

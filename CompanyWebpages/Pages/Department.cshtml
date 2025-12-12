@@ -1,13 +1,13 @@
-﻿@page "{orderId:int}"  
+﻿@page "{orderId:int}"
 @model CompanyWebpages.Pages.OrderTrackingModel
 @{
-    ViewData["Title"] = "Ordre Information";
+    ViewData["Title"] = "Order Information";
 }
 
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Ordre Information - Ordre #@Model.OrderId</h2>
-        <a href="/OrderOverview" class="btn btn-secondary">
+        <a asp-page="/AdminOrderList" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Tilbage til oversigt
         </a>
     </div>
@@ -46,15 +46,15 @@
     }
 
     @{
-        var missingItems = Model.OrderItems != null && Model.OrderItems.Any() 
-            ? Model.OrderItems.Where(i => i.Ingredient.Quantity <= 0 || i.Ingredient.Quantity < i.Quantity).ToList() 
-            : new List<OrderItem>();
-        var lowStockItems = Model.OrderItems != null && Model.OrderItems.Any() 
-            ? Model.OrderItems.Where(i => i.Ingredient.Quantity > 0 && i.Ingredient.Quantity >= i.Quantity && i.Ingredient.Quantity < 5).ToList() 
-            : new List<OrderItem>();
-        var availableItems = Model.OrderItems != null && Model.OrderItems.Any() 
-            ? Model.OrderItems.Where(i => i.Ingredient.Quantity >= i.Quantity && i.Ingredient.Quantity >= 5).ToList() 
-            : new List<OrderItem>();
+        var missingItems = Model.OrderItems != null && Model.OrderItems.Any()
+        ? Model.OrderItems.Where(i => i.Ingredient.Quantity <= 0 || i.Ingredient.Quantity < i.Quantity).ToList()
+        : new List<OrderItem>();
+        var lowStockItems = Model.OrderItems != null && Model.OrderItems.Any()
+        ? Model.OrderItems.Where(i => i.Ingredient.Quantity > 0 && i.Ingredient.Quantity >= i.Quantity && i.Ingredient.Quantity < 5).ToList()
+        : new List<OrderItem>();
+        var availableItems = Model.OrderItems != null && Model.OrderItems.Any()
+        ? Model.OrderItems.Where(i => i.Ingredient.Quantity >= i.Quantity && i.Ingredient.Quantity >= 5).ToList()
+        : new List<OrderItem>();
     }
 
     @if (Model.OrderItems == null || !Model.OrderItems.Any())
@@ -62,7 +62,7 @@
         <div class="alert alert-info">
             <h5><i class="bi bi-info-circle-fill"></i> Ingen varer fundet</h5>
             <p>Denne ordre har ikke nogen tilknyttede varer at spore endnu.</p>
-            <a href="/OrderOverview" class="btn btn-primary">Tilbage til ordre oversigt</a>
+            <a asp-page="/AdminOrderList" class="btn btn-primary">Tilbage til ordre oversigt</a>
         </div>
     }
     else
@@ -77,9 +77,9 @@
                     {
                         var shortage = item.Quantity - item.Ingredient.Quantity;
                         <li>
-                            <strong>@item.Ingredient.Name</strong>: 
-                            Behov: @item.Quantity, 
-                            Tilgængelig: @item.Ingredient.Quantity, 
+                            <strong>@item.Ingredient.Name</strong>:
+                            Behov: @item.Quantity,
+                            Tilgængelig: @item.Ingredient.Quantity,
                             Mangler: @(shortage > 0 ? shortage.ToString() : "0")
                             - Lager: @item.Warehouse.Name (@item.Warehouse.Location)
                         </li>
@@ -96,8 +96,8 @@
                     @foreach (var item in lowStockItems)
                     {
                         <li>
-                            <strong>@item.Ingredient.Name</strong>: 
-                            Kun @item.Ingredient.Quantity tilbage 
+                            <strong>@item.Ingredient.Name</strong>:
+                            Kun @item.Ingredient.Quantity tilbage
                             - Lager: @item.Warehouse.Name (@item.Warehouse.Location)
                         </li>
                     }
@@ -135,11 +135,11 @@
                             {
                                 var hasEnough = item.Ingredient.Quantity >= item.Quantity;
                                 var statusClass = !hasEnough ? "bg-danger text-white" :
-                                                  item.Ingredient.Quantity < 5 ? "bg-warning text-dark" :
-                                                  "bg-success text-white";
+                                item.Ingredient.Quantity < 5 ? "bg-warning text-dark" :
+                                "bg-success text-white";
                                 var statusIcon = !hasEnough ? "❌" :
-                                                item.Ingredient.Quantity < 5 ? "⚠️" :
-                                                "✅";
+                                item.Ingredient.Quantity < 5 ? "⚠️" :
+                                "✅";
 
                                 <tr class="@statusClass">
                                     <td><strong>@item.Ingredient.Name</strong></td>
