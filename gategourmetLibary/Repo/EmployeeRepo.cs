@@ -454,7 +454,7 @@ namespace gategourmetLibrary.Models
                 return false;           
             }
         }
-        public manger GetManger(int id)
+        public Admin GetManger(int id)
         {
 
             SqlConnection connection = new SqlConnection(_connectionString);
@@ -479,15 +479,15 @@ namespace gategourmetLibrary.Models
             if (reader.Read())
             {
                 // hvis medarbejdern blev fundet, bliver der oprettet en ny objekt med data fra databasen
-                manger admin = new manger()
+                Admin admin = new Admin()
                 {
                     Id = (int)reader["employeeId"],
                     Name = reader["employeeName"].ToString(),
                     Email = reader["employeeEmail"].ToString(),
                     Password = reader["employeePassword"].ToString()
                 };
-                admin.position.Id = (int)reader["postionid"];
-                admin.position.Name = reader["posname"].ToString();
+                admin.MyPosition.Id = (int)reader["postionid"];
+                admin.MyPosition.Name = reader["posname"].ToString();
 
 
                 // lukker for reader og returner medarbejderen 

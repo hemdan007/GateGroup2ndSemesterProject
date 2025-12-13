@@ -21,6 +21,6 @@ namespace gategourmetLibrary.Repo
         Dictionary<int, string> GetAllPostions();
         Dictionary<int, Employee> GetEmployeeFromOrderID(int orderid);
         bool IsThisAnAdmin(int employeeID);
-        manger GetManger(int id);
+        Admin GetManger(int id);
     }
 }
