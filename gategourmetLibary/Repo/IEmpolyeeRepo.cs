@@ -16,10 +16,11 @@ namespace gategourmetLibrary.Repo
         Dictionary<int,Employee> GetAll();
         void Update(Employee empolyee);
         List<Employee> Filter(string empolyee);
+        public void AddNewAdmin(Admin admin);
 
         Dictionary<int, string> GetAllPostions();
         Dictionary<int, Employee> GetEmployeeFromOrderID(int orderid);
         bool IsThisAnAdmin(int employeeID);
-        manger GetManger(int id);
+        Admin GetManger(int id);
     }
 }

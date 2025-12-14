@@ -80,7 +80,7 @@ namespace gategourmetLibrary.Service
         {
             if(_iemployee.IsThisAnAdmin(employeeId) == true)
             {
-                manger loginAttempt = _iemployee.GetManger(employeeId);
+                Admin loginAttempt = _iemployee.GetManger(employeeId);
                 
                 if(loginAttempt.Password == password)
                 {
@@ -98,5 +98,13 @@ namespace gategourmetLibrary.Service
 
 
         }
+
+        public void AddNewAdmin(Admin admin)
+        {
+            _iemployee.AddNewAdmin(admin);
+        }
+
+
+
     }
 }

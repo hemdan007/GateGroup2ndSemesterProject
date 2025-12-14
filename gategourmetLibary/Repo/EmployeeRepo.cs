@@ -454,7 +454,7 @@ namespace gategourmetLibrary.Models
                 return false;           
             }
         }
-        public manger GetManger(int id)
+        public Admin GetManger(int id)
         {
 
             SqlConnection connection = new SqlConnection(_connectionString);
@@ -479,15 +479,15 @@ namespace gategourmetLibrary.Models
             if (reader.Read())
             {
                 // hvis medarbejdern blev fundet, bliver der oprettet en ny objekt med data fra databasen
-                manger admin = new manger()
+                Admin admin = new Admin()
                 {
                     Id = (int)reader["employeeId"],
                     Name = reader["employeeName"].ToString(),
                     Email = reader["employeeEmail"].ToString(),
                     Password = reader["employeePassword"].ToString()
                 };
-                admin.position.Id = (int)reader["postionid"];
-                admin.position.Name = reader["posname"].ToString();
+                admin.MyPosition.Id = (int)reader["postionid"];
+                admin.MyPosition.Name = reader["posname"].ToString();
 
 
                 // lukker for reader og returner medarbejderen 
@@ -503,6 +503,48 @@ namespace gategourmetLibrary.Models
                 return null;
             }
         }
+
+
+            
+
+
+        
+
+        public void AddNewAdmin(Admin admin)
+        {
+            SqlConnection connection = new SqlConnection(_connectionString);
+            Add(admin);
+            // sql kommando: der indsætter ny medarbejder i Employee tabellen
+            SqlCommand command = new SqlCommand(
+                "INSERT INTO EmployeePostion (Pos_ID,E_ID) " +
+                "VALUES (@PosId,@Id)",
+                connection);
+
+            // indsætter værdierne i paramenterne
+            command.Parameters.AddWithValue("@Id", admin.Id);
+            command.Parameters.AddWithValue("@PosId", admin.MyPosition.Id);
+
+            try
+            {
+                connection.Open();
+                command.ExecuteNonQuery();
+
+            }
+            catch(SqlException ex)
+            {
+                Debug.WriteLine("this is the ex massage"+ex.Message);
+                throw ex;
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+
+
+        }
+
+
     }
 }
 
