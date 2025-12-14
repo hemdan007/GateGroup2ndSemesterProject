@@ -6,10 +6,6 @@ using System.Threading.Tasks;
 
 namespace gategourmetLibrary.Models
 {
-    
-}
-namespace gategourmetLibrary.Models
-{
     public class OrderItem
     {
         public int OrderItemId { get; set; }
