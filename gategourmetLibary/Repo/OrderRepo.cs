@@ -1,335 +1,399 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using gategourmetLibary.Models;
 using gategourmetLibrary.Models;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Diagnostics;
+using System.Reflection.PortableExecutable;
 
 namespace gategourmetLibrary.Repo
 {
-    // Repository for all Order SQL operations.
-    // Raw SQL lives here (not in Service / Razor Pages).
+    // Repository class that handles all database operations related to orders.
+    // This class is responsible for reading and writing order data and related data
+    // (customers, recipe parts, ingredients, warehouses) to the sql database.
     public class OrderRepo : IOrderRepo
     {
-        // Connection string for the database
+        // connection string to the database
         private readonly string _connectionString;
 
-        // Constructor gets connection string from outside
-        public OrderRepo(string connectionString)
+        // constructor gets connection string from outside
+        public OrderRepo(string connection)
         {
-            _connectionString = connectionString;
+            _connectionString = connection;
         }
 
-        // Gets all orders (including customer if linked)
+        // Gets all orders from the database as a dictionary.
+        public Dictionary<int, Order> GetAll()
+        {
+            Dictionary<int, Order> ordersFromDatabase = new Dictionary<int, Order>();
+
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status, " +
+                "c.C_ID, c.C_Name " +
+                "FROM OrderTable o " +
+                "LEFT JOIN OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                "LEFT JOIN Customer c ON oc.C_ID = c.C_ID ",
+                sqlConnection);
+
+            try
+            {
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+
+                while (sqlReader.Read())
+                {
+                    int id = Convert.ToInt32(sqlReader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
+
+                    // read status from database stored as a string
+                    string statusString = sqlReader["O_Status"].ToString();
+
+                    OrderStatus status;
+
+                    // try to map the string to the enum
+                    if (!Enum.TryParse<OrderStatus>(statusString, out status))
+                    {
+                        // fallback if value in DB is invalid or null
+                        status = OrderStatus.Created;
+                    }
+
+                    // create order object
+                    Order order = new Order(made, ready, id, paystatus);
+                    order.Status = status;
+
+                    // load customer information if available
+                    if (sqlReader["C_ID"] != DBNull.Value)
+                    {
+                        order.CustomerOrder = new Customer
+                        {
+                            ID = Convert.ToInt32(sqlReader["C_ID"]),
+                            Name = sqlReader["C_Name"].ToString()
+                        };
+                        
+                    }
+
+                    ordersFromDatabase.Add(id, order);
+                }
+
+                sqlReader.Close();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in OrderRepository.GetAll(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            return ordersFromDatabase;
+        }
+
+        // Returns all orders as a list 
         public List<Order> GetAllOrders()
         {
-            List<Order> orders = new List<Order>();
+            Dictionary<int, Order> ordersFromDatabase = GetAll();
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            if (ordersFromDatabase == null)
             {
-                SqlCommand command = new SqlCommand(
-                    "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status, " +
-                    "c.C_ID, c.C_Name " +
-                    "FROM OrderTable o " +
-                    "LEFT JOIN OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
-                    "LEFT JOIN Customer c ON oc.C_ID = c.C_ID",
-                    connection);
-
-                connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    int id = Convert.ToInt32(reader["O_ID"]);
-                    DateTime made = Convert.ToDateTime(reader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(reader["O_Ready"]);
-                    bool paystatus = Convert.ToBoolean(reader["O_PaySatus"]);
-
-                    string statusText = reader["O_Status"].ToString();
-                    OrderStatus status = ParseOrderStatus(statusText);
-
-                    Order order = new Order(made, ready, id, paystatus);
-                    order.Status = status;
-
-                    // Customer is optional (LEFT JOIN)
-                    if (reader["C_ID"] != DBNull.Value)
-                    {
-                        order.CustomerOrder = new Customer();
-                        order.CustomerOrder.ID = Convert.ToInt32(reader["C_ID"]);
-                        order.CustomerOrder.Name = reader["C_Name"].ToString();
-                    }
-
-                    orders.Add(order);
-                }
-
-                reader.Close();
+                return new List<Order>();
             }
 
-            return orders;
+            return new List<Order>(ordersFromDatabase.Values);
         }
 
-        // Gets orders for one customer (used by customer dashboard)
-        public List<Order> GetOrdersByCustomerId(int customerId)
-        {
-            List<Order> orders = new List<Order>();
-
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status " +
-                    "FROM dbo.OrderTable o " +
-                    "INNER JOIN dbo.OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
-                    "WHERE oc.C_ID = @CustomerId",
-                    connection);
-
-                command.Parameters.AddWithValue("@CustomerId", customerId);
-
-                connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    int id = Convert.ToInt32(reader["O_ID"]);
-                    DateTime made = Convert.ToDateTime(reader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(reader["O_Ready"]);
-                    bool paystatus = Convert.ToBoolean(reader["O_PaySatus"]);
-
-                    string statusText = reader["O_Status"].ToString();
-                    OrderStatus status = ParseOrderStatus(statusText);
-
-                    Order order = new Order(made, ready, id, paystatus);
-                    order.Status = status;
-
-                    orders.Add(order);
-                }
-
-                reader.Close();
-            }
-
-            return orders;
-        }
-
-        // Adds a new order + links customer + creates recipe parts + ingredient links
+        // Adds a new order to the database and related tables
         public void AddOrder(Order newOrder)
         {
-            if (newOrder == null)
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "INSERT INTO OrderTable (O_Made, O_Ready, O_PaySatus, O_Status) " +
+                "VALUES (@O_Made, @O_Ready, @O_PaySatus, @O_Status); " +
+                "SELECT SCOPE_IDENTITY();",
+                sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@O_Made", newOrder.OrderMade);
+            sqlCommand.Parameters.AddWithValue("@O_Ready", newOrder.OrderDoneBy);
+            sqlCommand.Parameters.AddWithValue("@O_PaySatus", newOrder.paystatus);
+
+            // store status as string in the database  created, cancelled
+            sqlCommand.Parameters.AddWithValue("@O_Status", newOrder.Status.ToString());
+
+            int newOrderId = 0;
+
+            try
             {
-                throw new ArgumentNullException(nameof(newOrder));
+                sqlConnection.Open();
+                newOrderId = Convert.ToInt32(sqlCommand.ExecuteScalar());
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Databasefejl i OrderRepository.AddOrder(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
             }
 
-            int newOrderId;
+            // link order to customer if it exists
+            if (newOrder.CustomerOrder != null)
+            {
+                AddOrderTableCustomert(newOrderId, newOrder.CustomerOrder.ID);
+            }
 
+            // add recipe parts and ingredients
+            foreach (KeyValuePair<int, RecipePart> part in newOrder.Recipe)
+            {
+                AddRecipePart(part.Value, newOrderId, part.Value.Ingredients);
+            }
+        }
+
+        // Method for cancelling an order and updates status to cancelled in the database
+        public void CancelOrder(int orderId)
+        {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 SqlCommand command = new SqlCommand(
-                    "INSERT INTO OrderTable (O_Made, O_Ready, O_PaySatus, O_Status) " +
-                    "VALUES (@O_Made, @O_Ready, @O_PaySatus, @O_Status); " +
-                    "SELECT SCOPE_IDENTITY();",
+                    "UPDATE dbo.OrderTable SET O_Status = @Status WHERE O_ID = @Id",
                     connection);
 
-                command.Parameters.AddWithValue("@O_Made", newOrder.OrderMade);
-                command.Parameters.AddWithValue("@O_Ready", newOrder.OrderDoneBy);
-                command.Parameters.AddWithValue("@O_PaySatus", newOrder.paystatus);
-                command.Parameters.AddWithValue("@O_Status", newOrder.Status.ToString());
+                // store the enum as string in the database
+                command.Parameters.AddWithValue("@Status", OrderStatus.Cancelled.ToString());
+                command.Parameters.AddWithValue("@Id", orderId);
 
                 connection.Open();
-                newOrderId = Convert.ToInt32(command.ExecuteScalar());
+                command.ExecuteNonQuery();
+            }
+        }
+
+        // Links order to customer in junction table OrderTableCustomer.
+        public void AddOrderTableCustomert(int orderID, int customerID)
+        {
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "INSERT INTO OrderTableCustomer (O_ID, C_ID) " +
+                "VALUES (@O_ID, @C_ID)",
+                sqlConnection);
+
+            Debug.WriteLine("order id is " + orderID + " customer id is " + customerID);
+
+            sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
+            sqlCommand.Parameters.AddWithValue("@C_ID", customerID);
+
+            try
+            {
+                sqlConnection.Open();
+                sqlCommand.ExecuteNonQuery();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Databasefejl i OrderRepository.AddOrderTableCustomert(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+        }
+
+        // adds one relation between a recipe and an ingredient
+        public void AddRecipePartIngredient(int recipeID, int ingredientID)
+        {
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "INSERT INTO IngrefientrecipePart (R_ID, I_ID) " +
+                "VALUES (@R_ID, @I_ID)",
+                sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@R_ID", recipeID);
+            sqlCommand.Parameters.AddWithValue("@I_ID", ingredientID);
+
+            try
+            {
+                sqlConnection.Open();
+                sqlCommand.ExecuteNonQuery();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Databasefejl i OrderRepository.AddRecipePartIngredient(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+        }
+
+        // adds one relation between an order and a recipe part
+        public void AddOrderRecipePart(int orderID, int recipePartID)
+        {
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "INSERT INTO OrderTableRecipePart (R_ID, O_ID) " +
+                "VALUES (@R_ID, @O_ID)",
+                sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@O_ID", orderID);
+            sqlCommand.Parameters.AddWithValue("@R_ID", recipePartID);
+
+            try
+            {
+                sqlConnection.Open();
+                sqlCommand.ExecuteNonQuery();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Databasefejl i OrderRepository.AddOrderRecipePart(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+        }
+
+        // adds a recipe part and its ingredients, then links it to an order
+        public void AddRecipePart(RecipePart recipePart, int orderId, List<Ingredient> ingredients)
+        {
+            recipePart.status = "not begun";
+
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "INSERT INTO RecipePart (R_HowToPrep, R_Name, R_Status) " +
+                "VALUES (@R_HowToPrep, @R_Name, @R_Status); " +
+                "SELECT SCOPE_IDENTITY();",
+                sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@R_HowToPrep", recipePart.Assemble);
+            sqlCommand.Parameters.AddWithValue("@R_Name", recipePart.partName);
+            sqlCommand.Parameters.AddWithValue("@R_Status", recipePart.status);
+
+            int newRecipePartId = 0;
+
+            try
+            {
+                sqlConnection.Open();
+                newRecipePartId = Convert.ToInt32(sqlCommand.ExecuteScalar());
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Databasefejl i OrderRepository.AddRecipePart(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
             }
 
-            // Link order to customer (if given)
-            if (newOrder.CustomerOrder != null && newOrder.CustomerOrder.ID != 0)
-            {
-                AddOrderTableCustomer(newOrderId, newOrder.CustomerOrder.ID);
-            }
+            AddOrderRecipePart(orderId, newRecipePartId);
 
-            // Add recipe parts + ingredient relations
-            if (newOrder.Recipe != null)
+            foreach (Ingredient ingredient in ingredients)
             {
-                foreach (KeyValuePair<int, RecipePart> partEntry in newOrder.Recipe)
+                AddRecipePartIngredient(newRecipePartId, ingredient.ID);
+            }
+        }
+
+        public void Delete(int orderID)
+        {
+            // not implemented 
+        }
+
+        // Returns a specific order by its ID.
+        public Order Get(int orderID)
+        {
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            Order order = new Order();
+
+            SqlCommand sqlCommand = new SqlCommand(
+                "SELECT OrderTable.O_ID as orderID, OrderTable.O_Made as made, OrderTable.O_Ready as ready," +
+                " OrderTable.O_PaySatus as paysatus, OrderTable.O_Status as orderstatus, " +
+                "RP.R_ID as rid, RP.R_Name as rname, RP.R_HowToPrep as howtoprep,RP.R_Status as rstatus" +
+                " FROM OrderTable" +
+                " left join orderTableRecipePart OTP on OTP.O_ID = OrderTable.o_ID " +
+                "JOIN RecipePart RP ON OTP.R_ID = RP.R_ID " +
+                "WHERE OrderTable.O_ID = @id",
+                sqlConnection);
+
+            sqlCommand.Parameters.AddWithValue("@id", orderID);
+
+            try
+            {
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+
+                if (sqlReader.Read())
                 {
-                    RecipePart recipePart = partEntry.Value;
-                    if (recipePart != null)
+                    int id = Convert.ToInt32(sqlReader["orderID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["paysatus"]);
+                    string statusString = sqlReader["orderstatus"].ToString();
+
+                    OrderStatus status;
+                    if (!Enum.TryParse<OrderStatus>(statusString, out status))
                     {
-                        if (recipePart.Ingredients == null)
+                        status = OrderStatus.Created;
+                    }
+                        int rID = Convert.ToInt32(sqlReader["rid"]);
+                        string rName =  sqlReader["rname"].ToString();
+                        string howtoprep = sqlReader["howtoprep"].ToString();
+                        string rStatus = sqlReader["rstatus"].ToString();
+
+
+
+
+                    if (order.ID != id)
+                    {
+                        order = new Order(made, ready, id, paystatus, status);
+
+                        order.Recipe.Add(rID, new RecipePart
                         {
-                            recipePart.Ingredients = new List<Ingredient>();
-                        }
-
-                        AddRecipePart(recipePart, newOrderId, recipePart.Ingredients);
+                            ID = rID,
+                            partName = rName,
+                            Assemble = howtoprep,
+                            status = rStatus
+                        });
                     }
-                }
-            }
-        }
-
-        // Deletes an order and all dependent relations (junction tables first)
-        public void DeleteOrder(int orderId)
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                connection.Open();
-
-                // Delete junction table rows first (avoid FK conflicts)
-                SqlCommand cmd1 = new SqlCommand("DELETE FROM orderTableRecipePart WHERE O_ID = @id", connection);
-                cmd1.Parameters.AddWithValue("@id", orderId);
-                cmd1.ExecuteNonQuery();
-
-                SqlCommand cmd2 = new SqlCommand("DELETE FROM OrderTableCustomer WHERE O_ID = @id", connection);
-                cmd2.Parameters.AddWithValue("@id", orderId);
-                cmd2.ExecuteNonQuery();
-
-                SqlCommand cmd3 = new SqlCommand("DELETE FROM EmployeeRecipePartOrderTable WHERE O_ID = @id", connection);
-                cmd3.Parameters.AddWithValue("@id", orderId);
-                cmd3.ExecuteNonQuery();
-
-                // Finally delete the order
-                SqlCommand cmd4 = new SqlCommand("DELETE FROM OrderTable WHERE O_ID = @id", connection);
-                cmd4.Parameters.AddWithValue("@id", orderId);
-                cmd4.ExecuteNonQuery();
-            }
-        }
-
-        // Updates an order (not used yet, but must exist for interface)
-        public void UpdateOrder(int orderId, Order updatedOrder)
-        {
-            // Not used right now
-            throw new NotImplementedException();
-        }
-
-        // Gets one order (and recipe parts) by id
-        public Order Get(int orderId)
-        {
-            Order order = null;
-
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status " +
-                    "FROM OrderTable o " +
-                    "WHERE o.O_ID = @id",
-                    connection);
-
-                command.Parameters.AddWithValue("@id", orderId);
-
-                connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-
-                if (reader.Read())
-                {
-                    int id = Convert.ToInt32(reader["O_ID"]);
-                    DateTime made = Convert.ToDateTime(reader["O_Made"]);
-                    DateTime ready = Convert.ToDateTime(reader["O_Ready"]);
-                    bool paystatus = Convert.ToBoolean(reader["O_PaySatus"]);
-
-                    string statusText = reader["O_Status"].ToString();
-                    OrderStatus status = ParseOrderStatus(statusText);
-
-                    order = new Order(made, ready, id, paystatus);
-                    order.Status = status;
-
-                    // Prepare recipe dictionary (so it never becomes null)
-                    order.Recipe = new Dictionary<int, RecipePart>();
-                }
-
-                reader.Close();
-            }
-
-            // Load recipe parts separately (keep Get() simple and safe)
-            if (order != null)
-            {
-                List<RecipePart> parts = GetRecipeParts(orderId);
-
-                for (int i = 0; i < parts.Count; i++)
-                {
-                    RecipePart part = parts[i];
-                    if (part != null)
+                    else
                     {
-                        // Use recipe part id as key
-                        order.Recipe.Add(part.ID, part);
+                        order.Recipe.Add(rID, new RecipePart
+                        {
+                            ID = rID,
+                            partName = rName,
+                            Assemble = howtoprep,
+                            status = rStatus
+                        });
                     }
                 }
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in OrderRepository.Get(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
             }
 
             return order;
         }
 
-        // Gets recipe parts for an order (basic version)
-        public List<RecipePart> GetRecipeParts(int orderId)
+        public void Update(int orderID, Order updateOrder)
         {
-            List<RecipePart> parts = new List<RecipePart>();
-
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "SELECT rp.R_ID, rp.R_Name, rp.R_HowToPrep, rp.R_Status " +
-                    "FROM OrderTableRecipePart otp " +
-                    "INNER JOIN RecipePart rp ON otp.R_ID = rp.R_ID " +
-                    "WHERE otp.O_ID = @id",
-                    connection);
-
-                command.Parameters.AddWithValue("@id", orderId);
-
-                connection.Open();
-                SqlDataReader reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    RecipePart part = new RecipePart();
-                    part.ID = Convert.ToInt32(reader["R_ID"]);
-                    part.partName = reader["R_Name"].ToString();
-                    part.Assemble = reader["R_HowToPrep"].ToString();
-                    part.status = reader["R_Status"].ToString();
-
-                    // Ingredients can be loaded later if needed
-                    part.Ingredients = new List<Ingredient>();
-
-                    parts.Add(part);
-                }
-
-                reader.Close();
-            }
-
-            return parts;
+            // not used in this project
         }
 
-        // Filters by employee (not used yet)
-        public List<Order> FilterByEmployee(Employee employee)
+        public Order filterAfterWhoMade(Employee filterAfterWhoMade)
         {
-            // Not used right now
-            return new List<Order>();
+            return null;
         }
 
-        // Filters by today (not used yet)
-        public List<Order> FilterByToday(DateTime today)
+        public Order filterAfterOrderToday(DateTime filterAfterOrderToday)
         {
-            // Not used right now
-            return new List<Order>();
+            return null;
         }
 
-        // Filters by customer/company (kept for interface)
-        public List<Order> FilterByCompany(Customer customer)
-        {
-            if (customer == null || customer.ID == 0)
-            {
-                return new List<Order>();
-            }
-
-            return GetOrdersByCustomerId(customer.ID);
-        }
-
-        // Filters by status (not used yet)
-        public List<Order> FilterByStatus(OrderStatus status)
-        {
-            // Not used right now
-            return new List<Order>();
-        }
-
-        // Filters by date (not used yet)
-        public List<Order> FilterByDate(DateTime date)
-        {
-            // Not used right now
-            return new List<Order>();
-        }
-
-        // Returns all ingredients with allergies (dropdown usage)
+        // Returns all ingredients from the database
         public Dictionary<int, Ingredient> GetAllIngredients()
         {
             Dictionary<int, Ingredient> ingredients = new Dictionary<int, Ingredient>();
@@ -350,65 +414,178 @@ namespace gategourmetLibrary.Repo
 
                 while (reader.Read())
                 {
-                    int ingredientId = Convert.ToInt32(reader["ingredientID"]);
+                    int ingredientId = (int)reader["ingredientID"];
 
                     if (!ingredients.ContainsKey(ingredientId))
                     {
-                        Ingredient ingredient = new Ingredient();
-                        ingredient.ID = ingredientId;
-                        ingredient.Name = reader["ingredientName"].ToString();
-                        ingredient.ExpireDate = Convert.ToDateTime(reader["ingredientExpireDate"]);
-                        ingredient.Quantity = Convert.ToInt32(reader["quntityOfIngredient"]);
-
-                        ingredients.Add(ingredientId, ingredient);
+                        ingredients.Add(ingredientId, new Ingredient
+                        {
+                            ID = ingredientId,
+                            Name = reader["ingredientName"].ToString(),
+                            ExpireDate = Convert.ToDateTime(reader["ingredientExpireDate"]),
+                            Quantity = (int)reader["quntityOfIngredient"]
+                        });
                     }
 
-                    // Add allergy to ingredient
-                    int allergyId = Convert.ToInt32(reader["allergyID"]);
-                    string allergyName = reader["allergyName"].ToString();
-
-                    ingredients[ingredientId].Allergies.Add(allergyId, allergyName);
+                    ingredients[ingredientId].Allergies.Add(
+                        (int)reader["allergyID"],
+                        reader["allergyName"].ToString());
                 }
-
-                reader.Close();
             }
 
             return ingredients;
         }
 
-        // Returns all allergies (dropdown usage)
-        public Dictionary<int, string> GetAllAllergies()
+        //delete an order by its ID 
+        public void DeleteOrder(int orderID)
         {
-            Dictionary<int, string> allergies = new Dictionary<int, string>();
+            // not implemented in this project
+        }
+
+        //update an existing order by its ID 
+        public void UpdateOrder(int orderID, Order updatedOrder)
+        {
+            // not implemented in this project
+        }
+
+        //returns a list of recipe parts for a specific order by orderID
+        public List<RecipePart> GetRecipeParts(int orderID)
+        {
+            return null;
+        }
+
+        //filters orders made by a specific employee
+        public List<Order> FilterByEmployee(Employee employee)
+        {
+            return null;
+        }
+
+        //filters orders placed today
+        public List<Order> FilterByToday(DateTime today)
+        {
+            return null;
+        }
+
+        //filters orders for a specific customer/company
+        public List<Order> FilterByCompany(Customer customer)
+        {
+            if (customer == null || customer.ID == 0)
+            {
+                return new List<Order>();
+            }
+
+            List<Order> orders = new List<Order>();
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
-                SqlCommand command = new SqlCommand("SELECT A_ID, A_Name FROM Allergie", connection);
+                // sql command to select orders for the customer
+                SqlCommand command = new SqlCommand(
+                    "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status " +
+                    "FROM dbo.OrderTable o " +
+                    "INNER JOIN dbo.OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                    "WHERE oc.C_ID = @CustomerId",
+                    connection);
+
+                command.Parameters.AddWithValue("@CustomerId", customer.ID);
 
                 connection.Open();
                 SqlDataReader reader = command.ExecuteReader();
 
                 while (reader.Read())
                 {
-                    int id = Convert.ToInt32(reader["A_ID"]);
-                    string name = reader["A_Name"].ToString();
+                    int id = Convert.ToInt32(reader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(reader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(reader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(reader["O_PaySatus"]);
+                    string statusString = reader["O_Status"].ToString();
 
-                    allergies.Add(id, name);
+                    OrderStatus status;
+                    if (!Enum.TryParse<OrderStatus>(statusString, out status))
+                    {
+                        status = OrderStatus.Created;
+                    }
+
+                    Order order = new Order(made, ready, id, paystatus);
+                    order.Status = status;
+                    order.CustomerOrder = customer;
+
+                    orders.Add(order);
                 }
-
-                reader.Close();
             }
 
-            return allergies;
+            return orders;
         }
 
-        // Returns all warehouses
+        //filters orders by their status
+        public List<Order> FilterByStatus(OrderStatus status)
+        {
+            return null;
+        }
+
+        //filters orders by a specific date
+        public List<Order> FilterByDate(DateTime date)
+        {
+            return null;
+        }
+
+        public void filterAfterCompany(Customer filterAfterCompany)
+        {
+        }
+
+        public void filterAfterStatus(Enum filterAfterStatus)
+        {
+        }
+
+        public void filterAfterDate(DateTime filterAfterDate)
+        {
+        }
+
+        // Returns all allergies from the database.
+        public Dictionary<int, string> GetAllAllergies()
+        {
+            Dictionary<int, string> allergiesFromDatabase = new Dictionary<int, string>();
+
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "SELECT A_ID, A_Name FROM Allergie",
+                sqlConnection);
+
+            try
+            {
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+
+                while (sqlReader.Read())
+                {
+                    int id = Convert.ToInt32(sqlReader["A_ID"]);
+                    string name = sqlReader["A_Name"].ToString();
+
+                    allergiesFromDatabase.Add(id, name);
+                }
+
+                sqlReader.Close();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in OrderRepository.GetAllAllergies(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            return allergiesFromDatabase;
+        }
+
+        // returns all warehouses (for example freezer, fridge, dry storage)
         public List<Warehouse> GetAllWarehouses()
         {
+            // list that will hold all warehouses from the database
             List<Warehouse> warehouses = new List<Warehouse>();
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
+                // select all warehouses from the warehouse table
                 SqlCommand command = new SqlCommand(
                     "SELECT W_ID, W_Name, W_Type, W_Location FROM dbo.warehouse",
                     connection);
@@ -418,33 +595,38 @@ namespace gategourmetLibrary.Repo
 
                 while (reader.Read())
                 {
+                    // create a new warehouse object for each row
                     Warehouse warehouse = new Warehouse();
                     warehouse.ID = Convert.ToInt32(reader["W_ID"]);
                     warehouse.Name = reader["W_Name"].ToString();
                     warehouse.Location = reader["W_Location"].ToString();
 
+                    // map W_Type (string in database) to WarehouseType enum in C#
                     WarehouseType type;
                     if (Enum.TryParse<WarehouseType>(reader["W_Type"].ToString(), true, out type))
                     {
                         warehouse.Type = type;
                     }
 
+                    // add the warehouse to the list
                     warehouses.Add(warehouse);
                 }
-
-                reader.Close();
             }
 
+            // return the list of all warehouses
             return warehouses;
         }
 
-        // Gets current warehouse location for a recipe part
+        // returns the warehouse where a specific recipe part is currently stored
         public Warehouse GetRecipePartLocation(int recipePartId)
         {
+            // default value is null if no location is found
             Warehouse warehouse = null;
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
+                // join between the junction table and warehouse
+                // to find the warehouse for a given recipe part (R_ID)
                 SqlCommand command = new SqlCommand(
                     "SELECT w.W_ID, w.W_Name, w.W_Type, w.W_Location " +
                     "FROM dbo.werehouseRecipePart wrp " +
@@ -452,11 +634,13 @@ namespace gategourmetLibrary.Repo
                     "WHERE wrp.R_ID = @R_ID",
                     connection);
 
+                // recipe part id parameter
                 command.Parameters.AddWithValue("@R_ID", recipePartId);
 
                 connection.Open();
                 SqlDataReader reader = command.ExecuteReader();
 
+                // if we find a row, we create a warehouse object
                 if (reader.Read())
                 {
                     warehouse = new Warehouse();
@@ -470,22 +654,24 @@ namespace gategourmetLibrary.Repo
                         warehouse.Type = type;
                     }
                 }
-
-                reader.Close();
             }
 
+            // this is either a warehouse object or null if no location exists yet
             return warehouse;
         }
 
-        // Updates (or inserts) warehouse location for a recipe part
+        // updates the warehouse location for a given recipe part
         public void UpdateRecipePartLocation(int recipePartId, int warehouseId)
         {
             using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
 
+                // first we try to update an existing row in the junction table
                 SqlCommand update = new SqlCommand(
-                    "UPDATE dbo.werehouseRecipePart SET W_ID = @W_ID WHERE R_ID = @R_ID",
+                    "UPDATE dbo.werehouseRecipePart " +
+                    "SET W_ID = @W_ID " +
+                    "WHERE R_ID = @R_ID",
                     connection);
 
                 update.Parameters.AddWithValue("@W_ID", warehouseId);
@@ -493,11 +679,12 @@ namespace gategourmetLibrary.Repo
 
                 int rows = update.ExecuteNonQuery();
 
-                // If no row exists -> insert
+                // if no rows were updated, it means there is no entry yet, then we insert a new row into the junction table
                 if (rows == 0)
                 {
                     SqlCommand insert = new SqlCommand(
-                        "INSERT INTO dbo.werehouseRecipePart (W_ID, R_ID) VALUES (@W_ID, @R_ID)",
+                        "INSERT INTO dbo.werehouseRecipePart (W_ID, R_ID) " +
+                        "VALUES (@W_ID, @R_ID)",
                         connection);
 
                     insert.Parameters.AddWithValue("@W_ID", warehouseId);
@@ -506,117 +693,6 @@ namespace gategourmetLibrary.Repo
                     insert.ExecuteNonQuery();
                 }
             }
-        }
-
-        // Cancels an order by setting status to Cancelled
-        public void CancelOrder(int orderId)
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "UPDATE dbo.OrderTable SET O_Status = @Status WHERE O_ID = @Id",
-                    connection);
-
-                command.Parameters.AddWithValue("@Status", OrderStatus.Cancelled.ToString());
-                command.Parameters.AddWithValue("@Id", orderId);
-
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
-        }
-
-        // Adds link between order and customer
-        private void AddOrderTableCustomer(int orderId, int customerId)
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "INSERT INTO OrderTableCustomer (O_ID, C_ID) VALUES (@O_ID, @C_ID)",
-                    connection);
-
-                command.Parameters.AddWithValue("@O_ID", orderId);
-                command.Parameters.AddWithValue("@C_ID", customerId);
-
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
-        }
-
-        // Adds link between recipe part and ingredient
-        private void AddRecipePartIngredient(int recipePartId, int ingredientId)
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "INSERT INTO IngrefientrecipePart (R_ID, I_ID) VALUES (@R_ID, @I_ID)",
-                    connection);
-
-                command.Parameters.AddWithValue("@R_ID", recipePartId);
-                command.Parameters.AddWithValue("@I_ID", ingredientId);
-
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
-        }
-
-        // Adds link between order and recipe part
-        private void AddOrderRecipePart(int orderId, int recipePartId)
-        {
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "INSERT INTO OrderTableRecipePart (R_ID, O_ID) VALUES (@R_ID, @O_ID)",
-                    connection);
-
-                command.Parameters.AddWithValue("@O_ID", orderId);
-                command.Parameters.AddWithValue("@R_ID", recipePartId);
-
-                connection.Open();
-                command.ExecuteNonQuery();
-            }
-        }
-
-        // Adds a recipe part and its ingredient relations, then links to order
-        private void AddRecipePart(RecipePart recipePart, int orderId, List<Ingredient> ingredients)
-        {
-            // Default status for new recipe parts
-            recipePart.status = "not begun";
-
-            int newRecipePartId;
-
-            using (SqlConnection connection = new SqlConnection(_connectionString))
-            {
-                SqlCommand command = new SqlCommand(
-                    "INSERT INTO RecipePart (R_HowToPrep, R_Name, R_Status) " +
-                    "VALUES (@R_HowToPrep, @R_Name, @R_Status); " +
-                    "SELECT SCOPE_IDENTITY();",
-                    connection);
-
-                command.Parameters.AddWithValue("@R_HowToPrep", recipePart.Assemble);
-                command.Parameters.AddWithValue("@R_Name", recipePart.partName);
-                command.Parameters.AddWithValue("@R_Status", recipePart.status);
-
-                connection.Open();
-                newRecipePartId = Convert.ToInt32(command.ExecuteScalar());
-            }
-
-            AddOrderRecipePart(orderId, newRecipePartId);
-
-            for (int i = 0; i < ingredients.Count; i++)
-            {
-                AddRecipePartIngredient(newRecipePartId, ingredients[i].ID);
-            }
-        }
-
-        // Converts DB string to enum safely
-        private OrderStatus ParseOrderStatus(string statusText)
-        {
-            OrderStatus status;
-            if (!Enum.TryParse<OrderStatus>(statusText, out status))
-            {
-                status = OrderStatus.Created;
-            }
-            return status;
         }
     }
 }
