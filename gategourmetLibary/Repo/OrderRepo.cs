@@ -13,6 +13,11 @@ namespace gategourmetLibrary.Repo
     // (customers, recipe parts, ingredients, warehouses) to the sql database.
     public class OrderRepo : IOrderRepo
     {
+        // Stores the current order ID
+        public int orderId { get; set; }
+
+
+
         // connection string to the database
         private readonly string _connectionString;
 
@@ -435,6 +440,49 @@ namespace gategourmetLibrary.Repo
         //delete an order by its ID 
         public void DeleteOrder(int ID)
         {
+
+
+            // get constring from connect class
+            string connectionString1 = new Connect().cstring;
+            using (SqlConnection conn = new SqlConnection(connectionString1))
+            {
+                // open connection
+                conn.Open();
+                string sql2 = @" DELETE FROM orderTableRecipePart WHERE O_ID =@id";
+                using (SqlCommand command = new SqlCommand(sql2, conn))
+                {
+                    command.Parameters.AddWithValue("@id", orderId);
+                    command.ExecuteNonQuery();
+                }
+                string sql3 = @" DELETE FROM OrderTableCustomer WHERE O_ID =@id";
+                using (SqlCommand command = new SqlCommand(sql3, conn))
+                {
+                    command.Parameters.AddWithValue("@id", orderId);
+                    command.ExecuteNonQuery();
+                }
+
+                string sql4 = @" DELETE FROM EmployeeRecipePartOrderTable WHERE O_ID =@id";
+                using (SqlCommand command = new SqlCommand(sql4, conn))
+                {
+                    command.Parameters.AddWithValue("@id", orderId);
+                    command.ExecuteNonQuery();
+                }
+
+
+                string sql = @" DELETE FROM OrderTable WHERE O_ID =@id";
+
+                //execute command
+                using (SqlCommand command = new SqlCommand(sql, conn))
+                {
+                    command.Parameters.AddWithValue("@id", orderId);
+                    command.ExecuteNonQuery();
+                }
+            }
+
+
+
+
+
             // get constring from connect class
             string connectionString = new Connect().cstring;
             using (SqlConnection conn = new SqlConnection(connectionString))

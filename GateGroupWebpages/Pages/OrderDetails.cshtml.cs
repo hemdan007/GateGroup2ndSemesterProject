@@ -1,15 +1,27 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Collections.Generic;
+using gategourmetLibary.Models;
 using gategourmetLibrary.Models;
 using gategourmetLibrary.Secret;
-using System.Collections.Generic;
+using gategourmetLibrary.Service;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.SqlClient;
-using gategourmetLibary.Models;
 
 namespace GateGroupWebpages.Pages
 {
     public class OrderDetailsModel : PageModel
     {
+        // Service used to handle order logic
+
+        private readonly OrderService _orderService;
+
+        // Constructor that injects OrderService
+        public OrderDetailsModel(OrderService orderService)
+        {
+            _orderService = orderService;
+        }
+
+
         //it holds the order 
         public Order Order { get; set; }
         //it holds the recipe parts details for the order
@@ -120,42 +132,45 @@ namespace GateGroupWebpages.Pages
         //delete handler/method
         public IActionResult OnPostDelete(int orderId)
         {
-            // get constring from connect class
-            string connectionString = new Connect().cstring;
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                // open connection
-                conn.Open();
-                string sql2 = @" DELETE FROM orderTableRecipePart WHERE O_ID =@id";
-                using (SqlCommand command = new SqlCommand(sql2, conn))
-                {
-                    command.Parameters.AddWithValue("@id", orderId);
-                    command.ExecuteNonQuery();
-                }
-                string sql3 = @" DELETE FROM OrderTableCustomer WHERE O_ID =@id";
-                using (SqlCommand command = new SqlCommand(sql3, conn))
-                {
-                    command.Parameters.AddWithValue("@id", orderId);
-                    command.ExecuteNonQuery();
-                }
+            // call the service to delete the order
+            _orderService.DeleteOrder(orderId);
 
-                string sql4 = @" DELETE FROM EmployeeRecipePartOrderTable WHERE O_ID =@id";
-                using (SqlCommand command = new SqlCommand(sql4, conn))
-                {
-                    command.Parameters.AddWithValue("@id", orderId);
-                    command.ExecuteNonQuery();
-                }
+            //// get constring from connect class
+            //string connectionString = new Connect().cstring;
+            //using (SqlConnection conn = new SqlConnection(connectionString))
+            //{
+            //    // open connection
+            //    conn.Open();
+            //    string sql2 = @" DELETE FROM orderTableRecipePart WHERE O_ID =@id";
+            //    using (SqlCommand command = new SqlCommand(sql2, conn))
+            //    {
+            //        command.Parameters.AddWithValue("@id", orderId);
+            //        command.ExecuteNonQuery();
+            //    }
+            //    string sql3 = @" DELETE FROM OrderTableCustomer WHERE O_ID =@id";
+            //    using (SqlCommand command = new SqlCommand(sql3, conn))
+            //    {
+            //        command.Parameters.AddWithValue("@id", orderId);
+            //        command.ExecuteNonQuery();
+            //    }
+
+            //    string sql4 = @" DELETE FROM EmployeeRecipePartOrderTable WHERE O_ID =@id";
+            //    using (SqlCommand command = new SqlCommand(sql4, conn))
+            //    {
+            //        command.Parameters.AddWithValue("@id", orderId);
+            //        command.ExecuteNonQuery();
+            //    }
 
 
-                string sql = @" DELETE FROM OrderTable WHERE O_ID =@id";
+            //    string sql = @" DELETE FROM OrderTable WHERE O_ID =@id";
 
-                //execute command
-                using (SqlCommand command = new SqlCommand(sql, conn))
-                {
-                    command.Parameters.AddWithValue("@id", orderId);
-                    command.ExecuteNonQuery();
-                }
-            }
+            //    //execute command
+            //    using (SqlCommand command = new SqlCommand(sql, conn))
+            //    {
+            //        command.Parameters.AddWithValue("@id", orderId);
+            //        command.ExecuteNonQuery();
+            //    }
+            //}
             //redirect to dashboard after deletion
             return RedirectToPage("/Dashboard");
 
