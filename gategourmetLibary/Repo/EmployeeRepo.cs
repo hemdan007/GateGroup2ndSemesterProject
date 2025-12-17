@@ -219,12 +219,12 @@ namespace gategourmetLibrary.Models
 
                 if(!DBNull.Value.Equals(reader["phoneid"]))
                 {
-                    int phone = (int)reader["phoneid"];
-                    if (phone % 2 == 0)
+                    
+                    if (string.IsNullOrEmpty(employees[(int)reader["employeeId"]].WorkPhoneNumber))
                     {
                         employees[(int)reader["employeeId"]].WorkPhoneNumber = reader["phoneNumber"].ToString();
                     }
-                    else if (phone % 2 != 0)
+                    else
                     {
                         employees[(int)reader["employeeId"]].PersonalPhoneNumber = reader["phoneNumber"].ToString();
                     }
