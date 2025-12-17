@@ -76,9 +76,9 @@ namespace gategourmetLibrary.Models
             {            
                 // åben forbindelse til sql
                 connection.Open();
-                // udføre sql kommando (indsætter data)
-                command.ExecuteNonQuery();
 
+
+                // udføre sql kommando (indsætter data)
                 phoneID = Convert.ToInt32(command.ExecuteScalar());
                 AddEmployeePhoneLink(phoneID, employeeID);
 
@@ -219,12 +219,12 @@ namespace gategourmetLibrary.Models
 
                 if(!DBNull.Value.Equals(reader["phoneid"]))
                 {
-                    int phone = (int)reader["phoneid"];
-                    if (phone % 2 == 0)
+                    
+                    if (string.IsNullOrEmpty(employees[(int)reader["employeeId"]].WorkPhoneNumber))
                     {
                         employees[(int)reader["employeeId"]].WorkPhoneNumber = reader["phoneNumber"].ToString();
                     }
-                    else if (phone % 2 != 0)
+                    else
                     {
                         employees[(int)reader["employeeId"]].PersonalPhoneNumber = reader["phoneNumber"].ToString();
                     }
