@@ -76,9 +76,9 @@ namespace gategourmetLibrary.Models
             {            
                 // åben forbindelse til sql
                 connection.Open();
-                // udføre sql kommando (indsætter data)
-                command.ExecuteNonQuery();
 
+
+                // udføre sql kommando (indsætter data)
                 phoneID = Convert.ToInt32(command.ExecuteScalar());
                 AddEmployeePhoneLink(phoneID, employeeID);
 
