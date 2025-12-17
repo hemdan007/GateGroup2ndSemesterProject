@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gategourmetLibary", "gatego
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GateGroupWebpages", "GateGroupWebpages\GateGroupWebpages.csproj", "{BCE40592-45B5-ECDF-B3B1-DA91B2127893}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GateGourmetLibaryTest", "GateGourmetLibaryTest\GateGourmetLibaryTest.csproj", "{CBC7591C-2DA6-43BD-8D32-F1C5ABBD69D0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{BCE40592-45B5-ECDF-B3B1-DA91B2127893}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BCE40592-45B5-ECDF-B3B1-DA91B2127893}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BCE40592-45B5-ECDF-B3B1-DA91B2127893}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBC7591C-2DA6-43BD-8D32-F1C5ABBD69D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBC7591C-2DA6-43BD-8D32-F1C5ABBD69D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBC7591C-2DA6-43BD-8D32-F1C5ABBD69D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBC7591C-2DA6-43BD-8D32-F1C5ABBD69D0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
