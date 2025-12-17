@@ -32,8 +32,9 @@ namespace GateGroupWebpages.Pages
         // Runs when the page is loaded
         public void OnGet()
         {
+            int id =Convert.ToInt32(HttpContext.Session.GetString("userid"));
             // Get all orders from service
-            Orders = _orderService.GetAllOrders();
+            Orders = _orderService.GetAllOrdersFromid(id);
 
             // Default filter if none is selected
             if (string.IsNullOrEmpty(statusFilter))

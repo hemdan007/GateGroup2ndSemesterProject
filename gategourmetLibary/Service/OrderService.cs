@@ -154,7 +154,11 @@ namespace gategourmetLibrary.Service
         {
             _orderRepo.UpdateRecipePartLocation(recipePartId, warehouseId);
         }
-        
+
+       public List<Order> GetAllOrdersFromid(int id)
+        {
+            return _orderRepo.GetAllOrdersFromid(id);
+        }
 
     }
 }

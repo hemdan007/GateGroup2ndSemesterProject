@@ -841,5 +841,89 @@ namespace gategourmetLibrary.Repo
                 }
             }
         }
+
+
+             public Dictionary<int, Order> GetAllFromID(int idcust)
+        {
+            Dictionary<int, Order> ordersFromDatabase = new Dictionary<int, Order>();
+
+            SqlConnection sqlConnection = new SqlConnection(_connectionString);
+            SqlCommand sqlCommand = new SqlCommand(
+                "SELECT o.O_ID, o.O_Made, o.O_Ready, o.O_PaySatus, o.O_Status, " +
+                "c.C_ID, c.C_Name " +
+                "FROM OrderTable o " +
+                "LEFT JOIN OrderTableCustomer oc ON o.O_ID = oc.O_ID " +
+                "LEFT JOIN Customer c ON oc.C_ID = c.C_ID " +
+                " where c.C_ID = @id",
+                sqlConnection);
+            sqlCommand.Parameters.AddWithValue("@id", idcust);
+
+            try
+            {
+                sqlConnection.Open();
+                SqlDataReader sqlReader = sqlCommand.ExecuteReader();
+
+                while (sqlReader.Read())
+                {
+                    int id = Convert.ToInt32(sqlReader["O_ID"]);
+                    DateTime made = Convert.ToDateTime(sqlReader["O_Made"]);
+                    DateTime ready = Convert.ToDateTime(sqlReader["O_Ready"]);
+                    bool paystatus = Convert.ToBoolean(sqlReader["O_PaySatus"]);
+
+                    // read status from database stored as a string
+                    string statusString = sqlReader["O_Status"].ToString();
+
+                    OrderStatus status;
+
+                    // try to map the string to the enum
+                    if (!Enum.TryParse<OrderStatus>(statusString, out status))
+                    {
+                        // fallback if value in DB is invalid or null
+                        status = OrderStatus.Created;
+                    }
+
+                    // create order object
+                    Order order = new Order(made, ready, id, paystatus);
+                    order.Status = status;
+
+                    // load customer information if available
+                    if (sqlReader["C_ID"] != DBNull.Value)
+                    {
+                        order.CustomerOrder = new Customer
+                        {
+                            ID = Convert.ToInt32(sqlReader["C_ID"]),
+                            Name = sqlReader["C_Name"].ToString()
+                        };
+                    }
+
+                    ordersFromDatabase.Add(id, order);
+                }
+
+                sqlReader.Close();
+            }
+            catch (SqlException sqlError)
+            {
+                throw new Exception("Database error in OrderRepository.GetAll(): " + sqlError.Message);
+            }
+            finally
+            {
+                sqlConnection.Close();
+            }
+
+            return ordersFromDatabase;
+        }
+
+        // Returns all orders as a list 
+        public List<Order> GetAllOrdersFromid(int id)
+        {
+            Dictionary<int, Order> ordersFromDatabase = GetAllFromID(id);
+
+            if (ordersFromDatabase == null)
+            {
+                return new List<Order>();
+            }
+
+            return new List<Order>(ordersFromDatabase.Values);
+        }
     }
 }

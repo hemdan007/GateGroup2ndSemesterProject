@@ -63,5 +63,6 @@ namespace gategourmetLibrary.Repo
 
         // returns all warehouses (freezer, fridge, dry storage)
         List<Warehouse> GetAllWarehouses();
+        List<Order> GetAllOrdersFromid(int id);
     }
 }
