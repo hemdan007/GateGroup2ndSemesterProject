@@ -277,6 +277,9 @@ namespace gategourmetLibrary.Service
         {
             return _orderRepo.GetAllOrdersFromid(id);
         }
-
+        public void MarkorderDone(int orderId)
+        {
+            _orderRepo.MarkorderDone(orderId);
+        }
     }
 }
