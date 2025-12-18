@@ -983,7 +983,6 @@ namespace gategourmetLibrary.Repo
                 SqlCommand command = new SqlCommand("UPDATE OrderTable SET O_Status = @status " +
                 "  WHERE O_ID = @id",
                 connection);
-                Debug.WriteLine(OrderStatus.Completed.ToString());
                 command.Parameters.AddWithValue("@status", OrderStatus.Completed.ToString());
                 command.Parameters.AddWithValue("@id", orderId);
 

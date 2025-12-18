@@ -540,8 +540,7 @@ namespace gategourmetLibrary.Models
             }
             catch(SqlException ex)
             {
-                Debug.WriteLine("this is the ex massage"+ex.Message);
-                throw ex;
+                throw new Exception("Database error in EmployeeRepo.AddNewAdmin(): " + ex.Message);
             }
             finally
             {
@@ -673,7 +672,6 @@ namespace gategourmetLibrary.Models
                             }
                             if(task.Status == OrderStatus.Completed)
                             {
-                                Debug.WriteLine($"{task.Status} task status is");
                                 task.IsCompleted = true;
 
                             }

@@ -32,7 +32,6 @@ namespace CompanyWebpages.Pages
 
         public IActionResult OnPost()
         {
-            Debug.WriteLine("test post");
             Load(Order.ID);
             return Page();
         }
