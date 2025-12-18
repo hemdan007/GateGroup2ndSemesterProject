@@ -27,6 +27,18 @@ namespace CompanyWebpages.Pages
 
         public void OnGet(int orderid)
         {
+            Load(orderid);
+        }
+
+        public IActionResult OnPost()
+        {
+            Debug.WriteLine("test post");
+            Load(Order.ID);
+            return Page();
+        }
+
+        public void Load(int orderid)
+        {
             try
             {
                 Order = _os.GetOrder(orderid);
@@ -46,7 +58,7 @@ namespace CompanyWebpages.Pages
                         kp.Value.StoredLocation = "this part has no Stored Location";
                     }
                 }
-              
+
             }
             catch (Exception)
             {
