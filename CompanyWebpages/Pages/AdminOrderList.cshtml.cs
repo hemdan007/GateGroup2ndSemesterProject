@@ -102,7 +102,7 @@ namespace CompanyWebpages.Pages
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Fejl ved indlæsning af kunder: " + ex.Message;
+                ErrorMessage = "Error loading customers:" + ex.Message;
                 Customers = new List<Customer>();
             }
         }
@@ -137,7 +137,7 @@ namespace CompanyWebpages.Pages
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Fejl ved indlæsning af ordrer: " + ex.Message;
+                ErrorMessage = "Error loading orders:" + ex.Message;
                 Orders = new List<Order>();
             }
         }
@@ -163,7 +163,7 @@ namespace CompanyWebpages.Pages
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Fejl ved indlæsning af medarbejdere: " + ex.Message;
+                ErrorMessage = "Error loading employees:" + ex.Message;
                 Filter = new List<SelectListItem>();
             }
         }
@@ -192,7 +192,7 @@ namespace CompanyWebpages.Pages
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Fejl ved indlæsning af afdelinger: " + ex.Message;
+                ErrorMessage = "Error loading departments:" + ex.Message;
                 DepartmentFilter = new List<SelectListItem>();
             }
         }
@@ -210,7 +210,7 @@ namespace CompanyWebpages.Pages
                 }
                 catch (Exception ex)
                 {
-                    ErrorMessage = "Fejl ved filtrering efter medarbejder: " + ex.Message;
+                    ErrorMessage = "Error filtering by employee:" + ex.Message;
                 }
             }
         }
@@ -250,7 +250,7 @@ namespace CompanyWebpages.Pages
         {
             _orderService.CancelOrder(orderId);
 
-            StatusMessage = "Ordre #" + orderId + " er blevet annulleret.";
+            StatusMessage = "Order #" + orderId + "has been cancelled.";
 
             return RedirectToPage();
         }

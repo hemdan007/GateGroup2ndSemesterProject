@@ -34,7 +34,7 @@ namespace CompanyWebpages.Pages
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Fejl ved hentning af ordre #{orderId}: {ex.Message}";
+                ErrorMessage = $"Error retrieving order {orderId}: {ex.Message}";
                 Order = null;
                 OrderItems = new List<OrderItem>();
                 return Page();
@@ -42,7 +42,7 @@ namespace CompanyWebpages.Pages
             
             if (Order == null)
             {
-                ErrorMessage = $"Ordre #{orderId} blev ikke fundet i systemet.";
+                ErrorMessage = $"Order #{orderId} was not found in the system.";
                 OrderItems = new List<OrderItem>();
                 return Page();
             }
@@ -59,12 +59,12 @@ namespace CompanyWebpages.Pages
 
                 if (OrderItems.Count == 0)
                 {
-                    ErrorMessage = $"Ingen varer fundet for ordre #{orderId}. Ordren har muligvis ikke nogen tilknyttede varer endnu.";
+                    ErrorMessage = $"Information: No items found for order {orderId}. The order may not have any associated items yet.";
                 }
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Fejl ved hentning af lagerplaceringer: {ex.Message}";
+                ErrorMessage = $"Error retrieving inventory locations:{ex.Message}";
                 OrderItems = new List<OrderItem>();
             }
 

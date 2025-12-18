@@ -60,7 +60,7 @@ namespace CompanyWebpages.Pages
 
 
 
-            Debug.WriteLine("admin bliver tilføjet");
+            Debug.WriteLine("admin is being added");
 
             
             

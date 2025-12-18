@@ -29,7 +29,7 @@ namespace CompanyWebpages.Pages
             CustomerID = customerId;
             if (password != confirmPassword)
             {
-                ErrorMessage = "Adgangskoderne matcher ikke";
+                ErrorMessage = "The passwords do not match";
                 return Page();
             }
 
@@ -37,7 +37,7 @@ namespace CompanyWebpages.Pages
             var customer = _customerService.GetCustomer(customerId);
             if (customer == null)
             {
-                ErrorMessage = $"Kunde med ID {customerId} findes ikke";
+                ErrorMessage = $"Customer with ID {customerId} does not exist";
                 return Page();
             }
           
@@ -45,7 +45,7 @@ namespace CompanyWebpages.Pages
             customer.Password = password;
             _customerService.UpdateCustomer(customerId, customer);
 
-            SuccessMessage = $"Adgangskode oprettet for kunde ID {customerId}";
+            SuccessMessage = $"Password created for customer ID {customerId}";
             return Page();
 
 
